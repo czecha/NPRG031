@@ -55,7 +55,7 @@ namespace chees_GUI{
         //      1. piece must not capture another piece owned by same player 
         //      2. for infinite movers they may only move untill they hit first piece
         //      3. after the move is made, generate the board and check if players king got into check 
-        //              if true the move is obivously not valid 
+        //              if true the move is obviously not valid 
         // helper methods for leafe class of object tree:
         protected void addMove(List<Move> result, int toX, int toY) { 
             Position from = new Position( position.row, position.col );
@@ -76,7 +76,6 @@ namespace chees_GUI{
 
         public override List<Move> possibleMoves( Tile[][] board ) {
             List<Move> result = new List<Move>();
-            //WriteLine("Infinite move reporting");
             // foreach vector, keep on adding options, untill you 'run' over edge of board
             int vX, vY;
             int x, y;
