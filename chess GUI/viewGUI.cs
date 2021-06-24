@@ -7,8 +7,6 @@ using CairoHelper = Gdk.CairoHelper;
 using Window = Gtk.Window;
 using static System.Console;
 
-namespace chees_GUI {
-
 class ViewGTK : Window {
     Chess chess;
     int pressCounter = 0;
@@ -158,9 +156,7 @@ class ViewGTK : Window {
         c.Rectangle(x, y, width, height);
         c.Fill();
     }
-} 
-
-} // chessGUI
+}
 
 /*
 missing features: 
