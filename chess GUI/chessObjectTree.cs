@@ -35,8 +35,6 @@ class Black : Player {
 
 abstract class Tile { }
 
-class Empty : Tile { }
-
 abstract class Piece : Tile {
     public Position position;
     public Player owner;
@@ -48,7 +46,7 @@ abstract class Piece : Tile {
 
     public abstract Piece getCopy();
 
-    public abstract List<Move> possibleMoves( Tile[][] board);
+    public abstract List<Move> possibleMoves( Tile[,] board);
     // filter out following rule violations:
     //      1. piece must not capture another piece owned by same player 
     //      2. for infinite movers they may only move untill they hit first piece
@@ -68,7 +66,7 @@ abstract class InfiniteMover : Piece {
     protected abstract (int, int)[] vectors { get; }
     public InfiniteMover(Position position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[][] board ) {
+    public override List<Move> possibleMoves( Tile[,] board ) {
         List<Move> result = new List<Move>();
         // foreach vector, keep on adding options, untill you 'run' over edge of board
         int x, y;
@@ -78,12 +76,12 @@ abstract class InfiniteMover : Piece {
             y = position.col + vY;
             while( isInsideBoard(x, y) ) {
                 // if you ran into piece of same player, break right here:
-                if( board[x][y] is Piece p)  // not empty 
+                if( board[x,y] is Piece p)  // not empty 
                     if ( (owner is White && p.owner is White) || ( owner is Black && p.owner is Black ) )
                         break;
 
                 // if you ran into piece of the other player, break here, since capturing is possible
-                if( isInsideBoard(x, y) && board[x][y] is Piece pp) { // not empty 
+                if( isInsideBoard(x, y) && board[x,y] is Piece pp) { // not empty 
                     if ( ( owner is White && pp.owner is Black ) || ( owner is Black && pp.owner is White ) ) {
                         addMove(result, x, y);
                         break;
@@ -103,16 +101,16 @@ abstract class OneStepMover : Piece {
     protected abstract (int, int)[] steps { get; }
     public OneStepMover(Position position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[][] board ) {
+    public override List<Move> possibleMoves( Tile[,] board ) {
         List<Move> result = new List<Move>();
         // foreach step, add it, if it is inside board and it is either empty or enemy piece
         foreach( (int x, int y) in steps) {
             int toX = position.row + x;
             int toY = position.col + y;
             if( isInsideBoard( toX, toY ) ) {
-                if(board[toX][toY] is Empty)
+                if(board[toX, toY] == null)
                     addMove(result, toX, toY);
-                if(board[toX][toY] is Piece p) { // allow captures, disallow caputuring piece of same player
+                if(board[toX, toY] is Piece p) { // allow captures, disallow caputuring piece of same player
                     if( p.owner is White && owner is Black || p.owner is Black && owner is White )
                         addMove(result, toX, toY);
                 }
@@ -223,7 +221,7 @@ class Knight : OneStepMover {
 class Pawn : Piece {
     public Pawn(Position position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[][] board ) {
+    public override List<Move> possibleMoves( Tile[,] board ) {
         int rowVector = 1, baseRow = 1; // deal with differences of white and black pawns
         if(owner is White) {
             rowVector = -1;
@@ -238,23 +236,23 @@ class Pawn : Piece {
         if( r == baseRow ) {
             if( owner is White ) {
                 int twoSteps = 4;
-                if( board[ r+rowVector ][c] is Empty && board[ r+rowVector+rowVector ][ c ] is Empty)
+                if( board[ r+rowVector , c] == null && board[ r+rowVector+rowVector , c ] == null)
                     addMove( result, twoSteps, c );
             } else { // owner is black
                 int twoSteps = 3;
-                if( board[ r+rowVector ][c] is Empty && board[ r+rowVector+rowVector ][ c ] is Empty)
+                if( board[ r+rowVector , c] == null && board[ r+rowVector+rowVector , c ] == null)
                     addMove( result, twoSteps, c );
             }
         }
         // horizontal one step, in case that tile is empty (pawn may not capture horizontaly)
-        if( board[ r+rowVector ][c] is Empty)
+        if( board[ r+rowVector , c] == null)
             addMove(result, r+rowVector, c);
         // -1 axis in case there is enemy pawn abd is inside board
-        if( c != 0 && board[r+rowVector][ c-1 ] is Piece p) 
+        if( c != 0 && board[r+rowVector,  c-1 ] is Piece p) 
             if( (owner is White && p.owner is Black ) || ( owner is Black && p.owner is White ) )
                 addMove( result, r+rowVector , c-1 );
         // +- axis in case there is enemy pawn and is inside board
-        if( c != 7 && board[r+rowVector][ c+1 ] is Piece pp) 
+        if( c != 7 && board[r+rowVector, c+1 ] is Piece pp) 
             if( (owner is White && pp.owner is Black ) || ( owner is Black && pp.owner is White ) )
                 addMove( result, r+rowVector , c+1 );
 

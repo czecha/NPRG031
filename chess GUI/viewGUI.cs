@@ -58,7 +58,7 @@ class ViewGTK : Window {
         string filePath, owner, Ptype;
         for(int i = 0; i < 8; i++) {
             for(int j = 0; j < 8; j++) {
-                if(chess.board[i][j] is Piece piece) {
+                if(chess.board[i, j] is Piece piece) {
                     owner = "b";
                     if(piece.owner is White)
                         owner = "w";
