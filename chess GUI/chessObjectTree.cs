@@ -61,11 +61,7 @@ abstract class Piece : Tile {
         result.Add(move);
     }
 
-    protected bool isInsideBoard(int x, int y) {
-        if ( x < 0 || 7 < x || y < 0 || 7 < y )
-            return false;
-        return true;
-    }
+    protected bool isInsideBoard(int x, int y) => x >= 0 && x <= 7 && y >= 0 && y <= 7;
 }
 
 abstract class InfiniteMover : Piece {
@@ -129,7 +125,7 @@ abstract class OneStepMover : Piece {
 class Queen : InfiniteMover {
     public Queen(Position position, Player owner) : base( position, owner) { }
 
-    (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+    (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
         (  1,  1 ),
         (  1,  0 ),
         (  1, -1 ),
@@ -150,7 +146,7 @@ class Queen : InfiniteMover {
 class Bishop : InfiniteMover {
     public Bishop(Position position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+    private (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
         (  1,  1 ),
         (  1, -1 ),
         ( -1,  1 ),
@@ -167,7 +163,7 @@ class Bishop : InfiniteMover {
 class Rook : InfiniteMover {
     public Rook(Position position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+    private (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
         (  1,  0 ),
         (  0,  1 ),
         (  0, -1 ),
@@ -184,7 +180,7 @@ class Rook : InfiniteMover {
 class King : OneStepMover {
     public King(Position position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _steps = new (int, int)[] { // posible steps of king
+    private (int, int)[] _steps = new (int, int)[] { // possible steps of king
         (  1,  1 ),
         (  1,  0 ),
         (  1, -1 ),
@@ -205,7 +201,7 @@ class King : OneStepMover {
 class Knight : OneStepMover {
     public Knight(Position position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _steps = new (int, int)[] { // posible steps of king
+    private (int, int)[] _steps = new (int, int)[] { // possible steps of king
         (  2,  1 ),
         (  1,  2 ),
         ( -2,  1 ),
