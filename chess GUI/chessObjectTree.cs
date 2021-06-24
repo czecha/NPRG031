@@ -69,18 +69,15 @@ abstract class Piece : Tile {
 }
 
 abstract class InfiniteMover : Piece {
-    protected abstract int[][] vectors { get; }
+    protected abstract (int, int)[] vectors { get; }
     public InfiniteMover(Position position, Player owner) : base( position, owner) { }
 
     public override List<Move> possibleMoves( Tile[][] board ) {
         List<Move> result = new List<Move>();
         // foreach vector, keep on adding options, untill you 'run' over edge of board
-        int vX, vY;
         int x, y;
 
-        foreach(int[] v in vectors) {
-            vX = v[0];
-            vY = v[1];
+        foreach( (int vX, int vY) in vectors) {
             x = position.row + vX;
             y = position.col + vY;
             while( isInsideBoard(x, y) ) {
@@ -99,8 +96,7 @@ abstract class InfiniteMover : Piece {
                         
                 addMove(result, x, y);
                 x += vX;
-                y += vY;
-                    
+                y += vY;  
             }
         }
         return result;
@@ -108,15 +104,15 @@ abstract class InfiniteMover : Piece {
 }
 
 abstract class OneStepMover : Piece {
-    protected abstract int[][] steps { get; }
+    protected abstract (int, int)[] steps { get; }
     public OneStepMover(Position position, Player owner) : base( position, owner) { }
 
     public override List<Move> possibleMoves( Tile[][] board ) {
         List<Move> result = new List<Move>();
         // foreach step, add it, if it is inside board and it is either empty or enemy piece
-        foreach(int[] s in steps) {
-            int toX = position.row + s[0];
-            int toY = position.col + s[1];
+        foreach( (int x, int y) in steps) {
+            int toX = position.row + x;
+            int toY = position.col + y;
             if( isInsideBoard( toX, toY ) ) {
                 if(board[toX][toY] is Empty)
                     addMove(result, toX, toY);
@@ -133,18 +129,18 @@ abstract class OneStepMover : Piece {
 class Queen : InfiniteMover {
     public Queen(Position position, Player owner) : base( position, owner) { }
 
-    int[][] _vectors = new int[][] { // posible directions of queen movement
-        new int[] {  1,  1 },
-        new int[] {  1,  0 },
-        new int[] {  1, -1 },
-        new int[] {  0,  1 },
-        new int[] {  0, -1 },
-        new int[] { -1,  1 },
-        new int[] { -1,  0 },
-        new int[] { -1, -1 }
+    (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+        (  1,  1 ),
+        (  1,  0 ),
+        (  1, -1 ),
+        (  0,  1 ),
+        (  0, -1 ),
+        ( -1,  1 ),
+        ( -1,  0 ),
+        ( -1, -1 )
     };
 
-    protected override int[][] vectors  { 
+    protected override (int, int)[] vectors  { 
         get => _vectors;
     }
 
@@ -154,14 +150,14 @@ class Queen : InfiniteMover {
 class Bishop : InfiniteMover {
     public Bishop(Position position, Player owner) : base( position, owner) { }
 
-    private int[][] _vectors = new int[][] { // posible directions of queen movement
-        new int[] {  1,  1 },
-        new int[] {  1, -1 },
-        new int[] { -1,  1 },
-        new int[] { -1, -1 }
+    private (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+        (  1,  1 ),
+        (  1, -1 ),
+        ( -1,  1 ),
+        ( -1, -1 )
     };
 
-    protected override int[][] vectors { 
+    protected override (int, int)[] vectors { 
         get => _vectors;
     }
 
@@ -171,14 +167,14 @@ class Bishop : InfiniteMover {
 class Rook : InfiniteMover {
     public Rook(Position position, Player owner) : base( position, owner) { }
 
-    private int[][] _vectors = new int[][] { // posible directions of queen movement
-        new int[] {  1,  0 },
-        new int[] {  0,  1 },
-        new int[] {  0, -1 },
-        new int[] { -1,  0 },
+    private (int, int)[] _vectors = new (int, int)[] { // posible directions of queen movement
+        (  1,  0 ),
+        (  0,  1 ),
+        (  0, -1 ),
+        ( -1,  0 )
     };
 
-    protected override int[][] vectors {
+    protected override (int, int)[] vectors {
         get => _vectors;
     }
 
@@ -188,18 +184,18 @@ class Rook : InfiniteMover {
 class King : OneStepMover {
     public King(Position position, Player owner) : base( position, owner) { }
 
-    private int[][] _steps = new int[][] { // posible steps of king
-        new int[] {  1,  1 },
-        new int[] {  1,  0 },
-        new int[] {  1, -1 },
-        new int[] {  0,  1 },
-        new int[] {  0, -1 },
-        new int[] { -1,  1 },
-        new int[] { -1,  0 },
-        new int[] { -1, -1 }
+    private (int, int)[] _steps = new (int, int)[] { // posible steps of king
+        (  1,  1 ),
+        (  1,  0 ),
+        (  1, -1 ),
+        (  0,  1 ),
+        (  0, -1 ),
+        ( -1,  1 ),
+        ( -1,  0 ),
+        ( -1, -1 )
     };
 
-    protected override int[][] steps {
+    protected override (int, int)[] steps {
         get => _steps;
     }
 
@@ -209,18 +205,18 @@ class King : OneStepMover {
 class Knight : OneStepMover {
     public Knight(Position position, Player owner) : base( position, owner) { }
 
-    private int[][] _steps = new int[][] { // posible steps of king
-        new int[] {  2,  1 },
-        new int[] {  1,  2 },
-        new int[] { -2,  1 },
-        new int[] { -1,  2 },
-        new int[] {  2, -1 },
-        new int[] {  1, -2 },
-        new int[] { -2, -1 },
-        new int[] { -1, -2 }
+    private (int, int)[] _steps = new (int, int)[] { // posible steps of king
+        (  2,  1 ),
+        (  1,  2 ),
+        ( -2,  1 ),
+        ( -1,  2 ),
+        (  2, -1 ),
+        (  1, -2 ),
+        ( -2, -1 ),
+        ( -1, -2 )
     };
 
-    protected override int[][] steps {
+    protected override (int, int)[] steps {
         get => _steps;
     }
 
