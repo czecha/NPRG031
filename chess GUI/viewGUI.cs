@@ -8,8 +8,8 @@ using Window = Gtk.Window;
 using static System.Console;
 
 class ViewGTK : Window {
-    Chess chess;
-    int pressCounter = 0;
+    readonly Chess chess;
+    //int pressCounter = 0;
     int fromX = -1;
     int fromY = -1;
     bool highlight = true;
@@ -21,9 +21,9 @@ class ViewGTK : Window {
         AddEvents((int) EventMask.ButtonPressMask);
     }
 
-    public static void run(Chess chess) {
+    public static void Run(Chess chess) {
         Application.Init();
-        ViewGTK v = new ViewGTK(chess);
+        ViewGTK v = new(chess);
         v.ShowAll();
         Application.Run();
     }
@@ -49,7 +49,7 @@ class ViewGTK : Window {
 
     void drawBoard(Context c) { 
         string filePath = "img/100wood.png";
-        Pixbuf board = new Pixbuf(filePath);
+        Pixbuf board = new(filePath);
         drawImage(c, board, 0, 0);
     }
 
@@ -59,9 +59,7 @@ class ViewGTK : Window {
         for(int i = 0; i < 8; i++) {
             for(int j = 0; j < 8; j++) {
                 if(chess.board[i, j] is Piece piece) {
-                    owner = "b";
-                    if(piece.owner is White)
-                        owner = "w";
+                    owner = piece.owner == Player.WHITE ? "w" : "b";
 
                     Ptype = "k";
                     if(piece is Queen) Ptype = "q";
@@ -83,7 +81,7 @@ class ViewGTK : Window {
         if( checkWin() )
             return true;
 
-        pressCounter++;
+        //pressCounter++;
         (int x, int y) = convertToTiles( e.X, e.Y);
         WriteLine($"Registered coordinates x, y: {e.X}, {e.Y}\nWhich translates to tiles: {x}, {y}\n");
         if(fromX == -1) {
@@ -97,7 +95,7 @@ class ViewGTK : Window {
             if(fromX == x && fromY == y) { // troll the user:
                 WriteLine("Interesting idea, true chess Grandmaster\n");
             } else {
-                Move move = new Move( new Position(fromX, fromY), new Position(x, y));
+                Move move = new ( new Position(fromX, fromY), new Position(x, y));
                 if(chess.makeMove(move)) {
                     WriteLine("This move is legitimate according to code rules! :) ");
                     WriteLine($"It is {chess.turn.ToString()}'s move now.");
@@ -113,14 +111,14 @@ class ViewGTK : Window {
         string checkMSG = chess.check ? ", king is in CHECK!" : "";
         string title = "Chess graphical interface";
         Title = title + ": white's turn" + checkMSG;
-        if(chess.turn is Black)
+        if(chess.turn == Player.BLACK )
             Title = title + ": black's turn" + checkMSG;
         QueueDraw();
         return true;
     }
 
     bool checkWin() {
-        if(chess.winner == null)
+        if( chess.winner == Player.NO_ONE )
             return false;
         
         clickedOnWinner++;
@@ -128,7 +126,7 @@ class ViewGTK : Window {
         if(clickedOnWinner == 1) {
             // change title informing about the win and queuedraw
             string winner = "white";
-            if(chess.winner is Black)
+            if( chess.winner == Player.BLACK )
                 winner = "black";
             Title = "Game over! The winner is " + winner + ".";
             QueueDraw();

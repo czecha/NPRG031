@@ -5,7 +5,7 @@ using Gtk;
 
 static class Program {
     static void Main() {
-        Chess chess = new Chess();
-        ViewGTK.run( chess );
+        Chess chess = new();
+        ViewGTK.Run( chess );
     }
 }   
