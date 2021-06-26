@@ -33,27 +33,27 @@ class ViewGTK : Window {
         return true;
     }
     
-    static void drawImage(Context c, Pixbuf pixbuf, int x, int y) {
+    static void DrawImage(Context c, Pixbuf pixbuf, int x, int y) {
         CairoHelper.SetSourcePixbuf(c, pixbuf, x, y);
         c.Paint();
     }
 
     protected override bool OnDrawn (Context c) {
-        drawBoard(c);
-        drawPieces(c);
+        DrawBoard(c);
+        DrawPieces(c);
         if(highlight)
             Highlight(c, fromX, fromY);
 
         return true;
     }
 
-    void drawBoard(Context c) { 
+    void DrawBoard(Context c) { 
         string filePath = "img/100wood.png";
         Pixbuf board = new(filePath);
-        drawImage(c, board, 0, 0);
+        DrawImage(c, board, 0, 0);
     }
 
-    void drawPieces(Context c) {
+    void DrawPieces(Context c) {
         Pixbuf board;
         string filePath, owner, Ptype;
         for(int i = 0; i < 8; i++) {
@@ -70,7 +70,7 @@ class ViewGTK : Window {
 
                     filePath = $"img/{owner}{Ptype}.png";
                     board = new Pixbuf(filePath);
-                    drawImage(c, board, j*100, i*100);
+                    DrawImage(c, board, j*100, i*100);
 
                 }
             }
@@ -78,11 +78,11 @@ class ViewGTK : Window {
     }
 
     protected override bool OnButtonPressEvent (EventButton e) {
-        if( checkWin() )
+        if( CheckWin() )
             return true;
 
         //pressCounter++;
-        (int x, int y) = convertToTiles( e.X, e.Y);
+        (int x, int y) = ConvertToTiles( e.X, e.Y);
         WriteLine($"Registered coordinates x, y: {e.X}, {e.Y}\nWhich translates to tiles: {x}, {y}\n");
         if(fromX == -1) {
             fromX = x;
@@ -96,9 +96,9 @@ class ViewGTK : Window {
                 WriteLine("Interesting idea, true chess Grandmaster\n");
             } else {
                 Move move = new ( (fromX, fromY), (x, y) );
-                if(chess.makeMove(move)) {
+                if(chess.MakeMove(move)) {
                     WriteLine("This move is legitimate according to code rules! :) ");
-                    WriteLine($"It is {chess.turn.ToString()}'s move now.");
+                    WriteLine($"It is {chess.turn}'s move now.");
                 } else {
                     WriteLine("Sorry, invalid move.");
                 }
@@ -117,7 +117,7 @@ class ViewGTK : Window {
         return true;
     }
 
-    bool checkWin() {
+    bool CheckWin() {
         if( chess.winner == Player.NO_ONE )
             return false;
         
@@ -138,18 +138,18 @@ class ViewGTK : Window {
         return true;
     }
 
-    (int, int) convertToTiles(double mouseX, double mouseY) => ( (int) mouseY/100 , (int) mouseX/100);
+    (int, int) ConvertToTiles(double mouseX, double mouseY) => ( (int) mouseY/100 , (int) mouseX/100);
     
     void Highlight(Context c, int x, int y) {
-        RGBA color = new RGBA();
+        RGBA color = new ();
         color.Alpha = 0.5;
         color.Red = 1;
         color.Green = 1;
         color.Blue = 1;
-        fillRectangle(c, color, 100 * y, 100 * x , 100, 100);
+        FillRectangle(c, color, 100 * y, 100 * x , 100, 100);
     }
 
-    void fillRectangle(Context c, RGBA color, int x, int y, int width, int height) {
+    void FillRectangle(Context c, RGBA color, int x, int y, int width, int height) {
         CairoHelper.SetSourceRgba(c, color);
         c.Rectangle(x, y, width, height);
         c.Fill();

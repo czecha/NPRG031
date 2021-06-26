@@ -25,45 +25,45 @@ abstract class Piece : Tile {
         this.position = position;
     }
 
-    public abstract Piece getCopy();
+    public abstract Piece GetCopy();
 
-    public abstract List<Move> possibleMoves( Tile[,] board);
+    public abstract List<Move> PossibleMoves( Tile[,] board);
     // filter out following rule violations:
     //      1. piece must not capture another piece owned by same player 
     //      2. for infinite movers they may only move untill they hit first piece
     //      3. after the move is made, generate the board and check if players king got into check 
     //              if true the move is obviously not valid 
     // helper methods for leafe class of object tree:
-    protected void addMove(List<Move> result, int toX, int toY) {
+    protected void AddMove(List<Move> result, int toX, int toY) {
         ( int, int ) from = position ;
-        Move move = new Move( from, (toX, toY) );
+        Move move = new ( from, (toX, toY) );
         result.Add(move);
     }
 
-    protected bool isInsideBoard( int x, int y ) => x >= 0 && x <= 7 && y >= 0 && y <= 7;
-    protected bool isEnemy( Piece p ) => ( owner == Player.WHITE && p.owner == Player.BLACK ) || ( owner == Player.BLACK && p.owner == Player.WHITE );
-    public bool isWhite() => owner == Player.WHITE;
-    public bool isBlack() => owner == Player.BLACK;
+    protected bool IsInsideBoard( int x, int y ) => x >= 0 && x <= 7 && y >= 0 && y <= 7;
+    protected bool IsEnemy( Piece p ) => ( owner == Player.WHITE && p.owner == Player.BLACK ) || ( owner == Player.BLACK && p.owner == Player.WHITE );
+    public bool IsWhite() => owner == Player.WHITE;
+    public bool IsBlack() => owner == Player.BLACK;
 }
 
 abstract class InfiniteMover : Piece {
     protected abstract (int, int)[] vectors { get; }
     public InfiniteMover( (int, int) position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[,] board ) {
-        List<Move> result = new List<Move>();
+    public override List<Move> PossibleMoves( Tile[,] board ) {
+        List<Move> result = new();
         int x, y;
 
         foreach( (int vX, int vY) in vectors) {
             // foreach vector, keep on adding options, untill you 'run' over edge of board or some other piece
             x = position.row + vX;
             y = position.col + vY;
-            while( isInsideBoard(x, y) ) {
+            while( IsInsideBoard(x, y) ) {
                 if( board[x,y] is Piece p && owner == p.owner )   
                     break; // if you ran into piece of same player, break right here
 
-                addMove(result, x, y);
-                if( board[x,y] is Piece pp && isEnemy( pp ) )
+                AddMove(result, x, y);
+                if( board[x,y] is Piece pp && IsEnemy( pp ) )
                     break; // if you ran into piece of the other player, break here, since capturing is possible
                 x += vX;
                 y += vY;  
@@ -77,15 +77,15 @@ abstract class OneStepMover : Piece {
     protected abstract (int, int)[] steps { get; }
     public OneStepMover( (int, int) position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[,] board ) {
-        List<Move> result = new List<Move>();
+    public override List<Move> PossibleMoves( Tile[,] board ) {
+        List<Move> result = new ();
         foreach( (int x, int y) in steps) {
             // foreach step, add it, if it is inside board and it is either empty or enemy piece
             int toX = position.row + x;
             int toY = position.col + y;
-            if( isInsideBoard( toX, toY ) ) {
-                if(board[toX, toY] == null || ( board[toX, toY] is Piece p && isEnemy( p ) ) )
-                    addMove(result, toX, toY);
+            if( IsInsideBoard( toX, toY ) ) {
+                if(board[toX, toY] == null || ( board[toX, toY] is Piece p && IsEnemy( p ) ) )
+                    AddMove(result, toX, toY);
             }
         }
         return result;
@@ -95,7 +95,7 @@ abstract class OneStepMover : Piece {
 class Queen : InfiniteMover {
     public Queen( (int, int) position, Player owner) : base( position, owner) { }
 
-    (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
+    readonly (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
         (  1,  1 ),
         (  1,  0 ),
         (  1, -1 ),
@@ -110,13 +110,13 @@ class Queen : InfiniteMover {
         get => _vectors;
     }
 
-    public override Queen getCopy() => new Queen(position, owner);
+    public override Queen GetCopy() => new (position, owner);
 }
 
 class Bishop : InfiniteMover {
     public Bishop( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // possible directions of bishop movement
+    readonly (int, int)[] _vectors = new (int, int)[] { // possible directions of bishop movement
         (  1,  1 ),
         (  1, -1 ),
         ( -1,  1 ),
@@ -127,13 +127,13 @@ class Bishop : InfiniteMover {
         get => _vectors;
     }
 
-    public override Bishop getCopy() => new Bishop(position, owner);
+    public override Bishop GetCopy() => new (position, owner);
 }
 
 class Rook : InfiniteMover {
     public Rook( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // possible directions of rook movement
+    readonly (int, int)[] _vectors = new (int, int)[] { // possible directions of rook movement
         (  1,  0 ),
         (  0,  1 ),
         (  0, -1 ),
@@ -144,13 +144,13 @@ class Rook : InfiniteMover {
         get => _vectors;
     }
 
-    public override Rook getCopy() => new Rook(position, owner);
+    public override Rook GetCopy() => new (position, owner);
 }
 
 class King : OneStepMover {
     public King( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _steps = new (int, int)[] { // possible steps of king
+    readonly (int, int)[] _steps = new (int, int)[] { // possible steps of king
         (  1,  1 ),
         (  1,  0 ),
         (  1, -1 ),
@@ -165,13 +165,13 @@ class King : OneStepMover {
         get => _steps;
     }
 
-    public override King getCopy() => new King(position, owner);
+    public override King GetCopy() => new (position, owner);
 }
 
 class Knight : OneStepMover {
     public Knight( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _steps = new (int, int)[] { // possible steps of knight
+    readonly (int, int)[] _steps = new (int, int)[] { // possible steps of knight
         (  2,  1 ),
         (  1,  2 ),
         ( -2,  1 ),
@@ -186,39 +186,39 @@ class Knight : OneStepMover {
         get => _steps;
     }
 
-    public override Knight getCopy() => new Knight(position, owner);
+    public override Knight GetCopy() => new (position, owner);
 }
 
 // ! transformations into queen will be dealt with at the level of class chess, class Pawn is unaware of these transformations
 class Pawn : Piece {
     public Pawn( (int, int) position, Player owner) : base( position, owner) { }
 
-    public override List<Move> possibleMoves( Tile[,] board ) {
-        int rowVector = isBlack() ? 1 : -1;
-        int baseRow = isBlack() ? 1 : 6;
-        int twoSteps = isWhite() ? 4 : 3; // destination row of two steps jump
-        List<Move> result = new List<Move>();
+    public override List<Move> PossibleMoves( Tile[,] board ) {
+        int rowVector = IsBlack() ? 1 : -1;
+        int baseRow = IsBlack() ? 1 : 6;
+        int twoSteps = IsWhite() ? 4 : 3; // destination row of two steps jump
+        List<Move> result = new ();
         int r = position.row;
         int c = position.col;
 
         // horizontal two steps, in case pawn is at baseRow, and both tiles are empty
         if( r == baseRow && board[ r+rowVector , c] == null && board[ r+rowVector+rowVector , c ] == null)
-            addMove( result, twoSteps, c );
+            AddMove( result, twoSteps, c );
         
         // horizontal one step, in case that tile is empty (pawn may not capture horizontaly)
         if( board[ r+rowVector , c] == null)
-            addMove(result, r+rowVector, c);
+            AddMove(result, r+rowVector, c);
 
         // -1 axis in case there is enemy pawn abd is inside board
-        if( c != 0 && board[r+rowVector,  c-1 ] is Piece p &&  isEnemy( p ) ) 
-            addMove( result, r+rowVector , c-1 );
+        if( c != 0 && board[r+rowVector,  c-1 ] is Piece p &&  IsEnemy( p ) ) 
+            AddMove( result, r+rowVector , c-1 );
 
         // +- axis in case there is enemy pawn and is inside board
-        if( c != 7 && board[r+rowVector, c+1 ] is Piece pp &&  isEnemy( pp ) ) 
-            addMove( result, r+rowVector , c+1 );
+        if( c != 7 && board[r+rowVector, c+1 ] is Piece pp &&  IsEnemy( pp ) ) 
+            AddMove( result, r+rowVector , c+1 );
 
         return result;
     }
 
-    public override Pawn getCopy() => new Pawn(position, owner);
+    public override Pawn GetCopy() => new (position, owner);
 }

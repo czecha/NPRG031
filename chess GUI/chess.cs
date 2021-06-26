@@ -14,7 +14,7 @@ class Chess
     public Chess()
     {
         check = false;
-        resetChessBoard();
+        ResetChessBoard();
     }
 
     private Chess(Tile[,] b, Player t)
@@ -31,10 +31,10 @@ class Chess
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 if (b[i, j] is Piece p)
-                    board[i, j] = p.getCopy();
+                    board[i, j] = p.GetCopy();
     }
 
-    public void resetChessBoard()
+    public void ResetChessBoard()
     {
         turn = Player.WHITE;
         winner = Player.NO_ONE;
@@ -65,7 +65,7 @@ class Chess
         board[7, 4] = new King(   (7, 4), Player.WHITE);
     }
 
-    public bool makeMove(Move move)
+    public bool MakeMove(Move move)
     {
         // return false if:
         //          a. the game is over
@@ -77,12 +77,12 @@ class Chess
 
         WriteLine("\nMake move initiated\n");
 
-        if (winner != Player.NO_ONE || outsideOfBoard(move) || board[move.from.row, move.from.col] == null)
+        if (winner != Player.NO_ONE || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
             return false;
 
         WriteLine("Passed first checks");
 
-        if (!isLegit(move))
+        if (!IsLegit(move))
             return false;
 
         WriteLine("Passed second check");
@@ -94,25 +94,25 @@ class Chess
             p.position.col = move.to.col; // position is being tracked in two different places
         }
         board[move.from.row, move.from.col] = null;
-        pawnToQueen(move);
+        PawnToQueen(move);
 
         turn = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
-        check = isPlayerInCheck(turn) ? true : false;
+        check = IsPlayerInCheck(turn);
 
         if (check)
         {
             // can king escape to not check position?
             // if not, it is game over for not in turn player
-            if (kingCannotEscape())
+            if (KingCannotEscape())
                 winner = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
         }
 
         return true;
     }
 
-    bool kingCannotEscape()
+    bool KingCannotEscape()
     {
-        (int x, int y) = getKingsCoordinates(turn);
+        (int x, int y) = GetKingsCoordinates(turn);
         King king = (King)board[x, y];
         Player player = turn == Player.WHITE ? Player.WHITE : Player.BLACK;
         // foreach possible move of inTurnKing
@@ -120,14 +120,14 @@ class Chess
         //              // if so return false (since you found at least one move, where the king stays alive )
         // return true
 
-        foreach (Move move in king.possibleMoves(board))
+        foreach (Move move in king.PossibleMoves(board))
         {
             // make the move on new instance of chess
             // look if king is in check
             // if not return false
-            Chess copy = new Chess(board, player);
-            copy.makeMove(move);
-            if (!copy.isPlayerInCheck(player))
+            Chess copy = new (board, player);
+            copy.MakeMove(move);
+            if (!copy.IsPlayerInCheck(player))
             {
                 WriteLine("King CAN escape!");
                 return false;
@@ -139,31 +139,31 @@ class Chess
     }
 
 
-    bool isCapture(Move move)
-    {
-        int x = move.to.row;
-        int y = move.to.col;
-        if (board[x, y] == null)
-            return false;
-        return true;
-    }
+    //bool IsCapture(Move move)
+    //{
+    //    int x = move.to.row;
+    //    int y = move.to.col;
+    //    if (board[x, y] == null)
+    //        return false;
+    //    return true;
+    //}
 
-    bool outsideOfBoard(Move move)
+    bool OutsideOfBoard(Move move)
     {
-        if (outsideOfBoard( move.from ))
+        if (OutsideOfBoard( move.from ))
             return true;
-        if (outsideOfBoard( move.to ))
+        if (OutsideOfBoard( move.to ))
             return true;
         return false;
     }
 
-    bool outsideOfBoard( ( int row, int col ) position ) => position.row < 0 || position.row > 7 || position.col < 0 || position.col > 7;
+    bool OutsideOfBoard( ( int row, int col ) position ) => position.row < 0 || position.row > 7 || position.col < 0 || position.col > 7;
 
-    bool isLegit(Move move)
+    bool IsLegit(Move move)
     {
         // called already after checking that move from is not empty and coordinates are inside board and winner is null
         // check if move.to is contains in getLegitMoves(move.from) result
-        List<Move> validMoves = getLegitMoves(move.from);
+        List<Move> validMoves = GetLegitMoves(move.from);
         WriteLine("Is legit function is assesing move: from: " + move.from.row + " " + move.from.col + " to: " + move.to.row + " " + move.to.col);
         foreach (Move m in validMoves)
         {
@@ -180,20 +180,15 @@ class Chess
         return false;
     }
 
-    bool MovesAreEqual(Move a, Move b)
-    {
-        if ((a.from.row != b.from.row) || (a.from.col != b.from.col) || (a.to.row != b.to.row) || (a.to.col != b.to.col))
-            return false;
-        return true;
-    }
+    bool MovesAreEqual(Move a, Move b) =>  a.from == b.from && a.to == b.to ;
 
-    void pawnToQueen(Move move)
+    void PawnToQueen(Move move)
     {
         if (board[move.to.row, move.to.col] is Pawn pawn && ((pawn.owner == Player.BLACK && move.to.row == 7) || (pawn.owner == Player.WHITE && move.to.row == 0)))
             board[move.to.row, move.to.col] = new Queen( (move.to.row, move.to.col), pawn.owner);
     }
 
-    bool isPlayerInCheck(Player player)
+    bool IsPlayerInCheck(Player player)
     {
         // pseudocode: 
         // for all notInTurn's pieces 
@@ -201,24 +196,24 @@ class Chess
         //          if the move 'steps' onto inTurn king 
         //              return true
         // return false
-        List<Piece> notInTurnPieces = new List<Piece>();
+        List<Piece> notInTurnPieces = new ();
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 if (board[i, j] is Piece p)
                     if ((player == Player.WHITE && p.owner == Player.BLACK) || (player == Player.BLACK && p.owner == Player.WHITE))
                         notInTurnPieces.Add(p);
 
-        (int x, int y) = getKingsCoordinates(player);
+        (int x, int y) = GetKingsCoordinates(player);
 
         foreach (Piece p in notInTurnPieces)
-            foreach (Move move in p.possibleMoves(board))
+            foreach (Move move in p.PossibleMoves(board))
                 if (move.to.row == x && move.to.col == y)
                     return true;
 
         return false;
     }
 
-    (int, int) getKingsCoordinates(Player player)
+    (int, int) GetKingsCoordinates(Player player)
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -228,15 +223,15 @@ class Chess
         throw new Exception("FATAL ERROR, one of the kings is not on board");
     }
 
-    public List<Move> getLegitMoves( (int row, int col) from)
+    public List<Move> GetLegitMoves( (int row, int col) from)
     {
         // return empty list if: 
         //          a. game is over (winner is not null)
         //          b. position's coordinate is outside of board
         //          c. board[position] is emptyTile
         // else get the list of legitimate moves
-        List<Move> result = new List<Move>();
-        if (winner != Player.NO_ONE || outsideOfBoard(from) || board[from.row, from.col] == null)
+        List<Move> result = new ();
+        if (winner != Player.NO_ONE || OutsideOfBoard(from) || board[from.row, from.col] == null)
             return result;
 
         WriteLine("GetLegitMoves 1");
@@ -253,7 +248,7 @@ class Chess
         WriteLine(board[from.row, from.col]);
 
         if (board[from.row, from.col] is Piece p)
-            result = p.possibleMoves(board);
+            result = p.PossibleMoves(board);
 
         WriteLine(result.Count);
 
