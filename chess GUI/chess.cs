@@ -43,26 +43,26 @@ class Chess
         // set the tiles to contain initial configuration of chess board
         for (int j = 0; j < 8; j++)
         {
-            board[1, j] = new Pawn(new Position(1, j), Player.BLACK);
-            board[6, j] = new Pawn(new Position(6, j), Player.WHITE);
+            board[1, j] = new Pawn( (1, j) , Player.BLACK);
+            board[6, j] = new Pawn( (6, j) , Player.WHITE);
         }
 
-        board[0, 0] = new Rook(new Position(0, 0), Player.BLACK);
-        board[0, 7] = new Rook(new Position(0, 7), Player.BLACK);
-        board[7, 0] = new Rook(new Position(7, 0), Player.WHITE);
-        board[7, 7] = new Rook(new Position(7, 7), Player.WHITE);
-        board[0, 1] = new Knight(new Position(0, 1), Player.BLACK);
-        board[0, 6] = new Knight(new Position(0, 6), Player.BLACK);
-        board[7, 1] = new Knight(new Position(7, 1), Player.WHITE);
-        board[7, 6] = new Knight(new Position(7, 6), Player.WHITE);
-        board[0, 2] = new Bishop(new Position(0, 2), Player.BLACK);
-        board[0, 5] = new Bishop(new Position(0, 5), Player.BLACK);
-        board[7, 2] = new Bishop(new Position(7, 2), Player.WHITE);
-        board[7, 5] = new Bishop(new Position(7, 5), Player.WHITE);
-        board[0, 3] = new Queen(new Position(0, 3), Player.BLACK);
-        board[7, 3] = new Queen(new Position(7, 3), Player.WHITE);
-        board[0, 4] = new King(new Position(0, 4), Player.BLACK);
-        board[7, 4] = new King(new Position(7, 4), Player.WHITE);
+        board[0, 0] = new Rook(   (0, 0), Player.BLACK);
+        board[0, 7] = new Rook(   (0, 7), Player.BLACK);
+        board[7, 0] = new Rook(   (7, 0), Player.WHITE);
+        board[7, 7] = new Rook(   (7, 7), Player.WHITE);
+        board[0, 1] = new Knight( (0, 1), Player.BLACK);
+        board[0, 6] = new Knight( (0, 6), Player.BLACK);
+        board[7, 1] = new Knight( (7, 1), Player.WHITE);
+        board[7, 6] = new Knight( (7, 6), Player.WHITE);
+        board[0, 2] = new Bishop( (0, 2), Player.BLACK);
+        board[0, 5] = new Bishop( (0, 5), Player.BLACK);
+        board[7, 2] = new Bishop( (7, 2), Player.WHITE);
+        board[7, 5] = new Bishop( (7, 5), Player.WHITE);
+        board[0, 3] = new Queen(  (0, 3), Player.BLACK);
+        board[7, 3] = new Queen(  (7, 3), Player.WHITE);
+        board[0, 4] = new King(   (0, 4), Player.BLACK);
+        board[7, 4] = new King(   (7, 4), Player.WHITE);
     }
 
     public bool makeMove(Move move)
@@ -150,14 +150,14 @@ class Chess
 
     bool outsideOfBoard(Move move)
     {
-        if (outsideOfBoard(move.from))
+        if (outsideOfBoard( move.from ))
             return true;
-        if (outsideOfBoard(move.to))
+        if (outsideOfBoard( move.to ))
             return true;
         return false;
     }
 
-    bool outsideOfBoard(Position position) => position.row < 0 || position.row > 7 || position.col < 0 || position.col > 7;
+    bool outsideOfBoard( ( int row, int col ) position ) => position.row < 0 || position.row > 7 || position.col < 0 || position.col > 7;
 
     bool isLegit(Move move)
     {
@@ -190,7 +190,7 @@ class Chess
     void pawnToQueen(Move move)
     {
         if (board[move.to.row, move.to.col] is Pawn pawn && ((pawn.owner == Player.BLACK && move.to.row == 7) || (pawn.owner == Player.WHITE && move.to.row == 0)))
-            board[move.to.row, move.to.col] = new Queen(new Position(move.to.row, move.to.col), pawn.owner);
+            board[move.to.row, move.to.col] = new Queen( (move.to.row, move.to.col), pawn.owner);
     }
 
     bool isPlayerInCheck(Player player)
@@ -228,7 +228,7 @@ class Chess
         throw new Exception("FATAL ERROR, one of the kings is not on board");
     }
 
-    public List<Move> getLegitMoves(Position from)
+    public List<Move> getLegitMoves( (int row, int col) from)
     {
         // return empty list if: 
         //          a. game is over (winner is not null)

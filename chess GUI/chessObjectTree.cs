@@ -1,25 +1,12 @@
 using System;
 using System.Collections.Generic;
-using static System.Console;
 
 class InvalidPositionException: Exception { }
 
-class Position { 
-    public int row;
-    public int col;
-    public Position(int row, int col) {
-        if(row < 0 || col < 0 || row > 7 || col > 7)
-            throw new InvalidPositionException();
-            
-        this.row = row;
-        this.col = col;
-    }
-}
-
 class Move { 
-    public Position from;
-    public Position to;
-    public Move(Position from, Position to) {
+    public (int row, int col) from;
+    public (int row, int col) to;
+    public Move( (int x, int y) from, (int x, int y) to) {
         this.from = from;
         this.to = to;
     }
@@ -30,10 +17,10 @@ enum Player { WHITE, BLACK, NO_ONE }
 abstract class Tile { }
 
 abstract class Piece : Tile {
-    public Position position;
+    public ( int row, int col ) position;
     public Player owner;
 
-    protected Piece( Position position, Player owner ) {
+    protected Piece( (int row, int col ) position, Player owner ) {
         this.owner = owner;
         this.position = position;
     }
@@ -47,9 +34,9 @@ abstract class Piece : Tile {
     //      3. after the move is made, generate the board and check if players king got into check 
     //              if true the move is obviously not valid 
     // helper methods for leafe class of object tree:
-    protected void addMove(List<Move> result, int toX, int toY) { 
-        Position from = new Position( position.row, position.col );
-        Move move = new Move(from, new Position(toX, toY) );
+    protected void addMove(List<Move> result, int toX, int toY) {
+        ( int, int ) from = position ;
+        Move move = new Move( from, (toX, toY) );
         result.Add(move);
     }
 
@@ -57,12 +44,11 @@ abstract class Piece : Tile {
     protected bool isEnemy( Piece p ) => ( owner == Player.WHITE && p.owner == Player.BLACK ) || ( owner == Player.BLACK && p.owner == Player.WHITE );
     public bool isWhite() => owner == Player.WHITE;
     public bool isBlack() => owner == Player.BLACK;
-
 }
 
 abstract class InfiniteMover : Piece {
     protected abstract (int, int)[] vectors { get; }
-    public InfiniteMover(Position position, Player owner) : base( position, owner) { }
+    public InfiniteMover( (int, int) position, Player owner) : base( position, owner) { }
 
     public override List<Move> possibleMoves( Tile[,] board ) {
         List<Move> result = new List<Move>();
@@ -89,7 +75,7 @@ abstract class InfiniteMover : Piece {
 
 abstract class OneStepMover : Piece {
     protected abstract (int, int)[] steps { get; }
-    public OneStepMover(Position position, Player owner) : base( position, owner) { }
+    public OneStepMover( (int, int) position, Player owner) : base( position, owner) { }
 
     public override List<Move> possibleMoves( Tile[,] board ) {
         List<Move> result = new List<Move>();
@@ -107,7 +93,7 @@ abstract class OneStepMover : Piece {
 }
 
 class Queen : InfiniteMover {
-    public Queen(Position position, Player owner) : base( position, owner) { }
+    public Queen( (int, int) position, Player owner) : base( position, owner) { }
 
     (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
         (  1,  1 ),
@@ -128,9 +114,9 @@ class Queen : InfiniteMover {
 }
 
 class Bishop : InfiniteMover {
-    public Bishop(Position position, Player owner) : base( position, owner) { }
+    public Bishop( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
+    private (int, int)[] _vectors = new (int, int)[] { // possible directions of bishop movement
         (  1,  1 ),
         (  1, -1 ),
         ( -1,  1 ),
@@ -145,9 +131,9 @@ class Bishop : InfiniteMover {
 }
 
 class Rook : InfiniteMover {
-    public Rook(Position position, Player owner) : base( position, owner) { }
+    public Rook( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _vectors = new (int, int)[] { // possible directions of queen movement
+    private (int, int)[] _vectors = new (int, int)[] { // possible directions of rook movement
         (  1,  0 ),
         (  0,  1 ),
         (  0, -1 ),
@@ -162,7 +148,7 @@ class Rook : InfiniteMover {
 }
 
 class King : OneStepMover {
-    public King(Position position, Player owner) : base( position, owner) { }
+    public King( (int, int) position, Player owner) : base( position, owner) { }
 
     private (int, int)[] _steps = new (int, int)[] { // possible steps of king
         (  1,  1 ),
@@ -183,9 +169,9 @@ class King : OneStepMover {
 }
 
 class Knight : OneStepMover {
-    public Knight(Position position, Player owner) : base( position, owner) { }
+    public Knight( (int, int) position, Player owner) : base( position, owner) { }
 
-    private (int, int)[] _steps = new (int, int)[] { // possible steps of king
+    private (int, int)[] _steps = new (int, int)[] { // possible steps of knight
         (  2,  1 ),
         (  1,  2 ),
         ( -2,  1 ),
@@ -205,7 +191,7 @@ class Knight : OneStepMover {
 
 // ! transformations into queen will be dealt with at the level of class chess, class Pawn is unaware of these transformations
 class Pawn : Piece {
-    public Pawn(Position position, Player owner) : base( position, owner) { }
+    public Pawn( (int, int) position, Player owner) : base( position, owner) { }
 
     public override List<Move> possibleMoves( Tile[,] board ) {
         int rowVector = isBlack() ? 1 : -1;

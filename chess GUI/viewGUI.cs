@@ -95,7 +95,7 @@ class ViewGTK : Window {
             if(fromX == x && fromY == y) { // troll the user:
                 WriteLine("Interesting idea, true chess Grandmaster\n");
             } else {
-                Move move = new ( new Position(fromX, fromY), new Position(x, y));
+                Move move = new ( (fromX, fromY), (x, y) );
                 if(chess.makeMove(move)) {
                     WriteLine("This move is legitimate according to code rules! :) ");
                     WriteLine($"It is {chess.turn.ToString()}'s move now.");
