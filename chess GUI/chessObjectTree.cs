@@ -3,6 +3,18 @@ using System.Collections.Generic;
 
 class InvalidPositionException: Exception { }
 
+class CastlingMemory
+{
+    public bool White_A_RookMoved = false;
+    public bool White_H_RookMoved = false;
+    public bool WhiteKingMoved = false;
+    public bool Black_A_RookMoved = false;
+    public bool Black_H_RookMoved = false;
+    public bool BlackKingMoved = false;
+
+    public CastlingMemory ShallowCopy() => (CastlingMemory) this.MemberwiseClone();
+}
+
 class Move { 
     public (int row, int col) from;
     public (int row, int col) to;

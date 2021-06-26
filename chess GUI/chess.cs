@@ -2,6 +2,25 @@ using System;
 using System.Collections.Generic;
 using static System.Console;
 
+/*
+ Known bugs:
+
+ Bug 1
+    white epawn to col 4
+    black dpawn to col 3
+    white fbishop to row 3, col 1
+
+    the bug is black knight jumps to defend king by itself also leaving black to play
+    
+ Bug 2
+    white dpawn to col 4
+    black epan to col 3
+    white dpan to col 3
+
+    the bug is white pawn captures the black pawn by this move, which is obviously not correct
+    additionaly all pawns always capture in this manner
+ */
+
 class Chess
 {
     public Tile[,] board = new Tile[8, 8];
@@ -10,17 +29,10 @@ class Chess
     public bool check = false;
     Tile lastCapture = null;
     bool lastMoveWasCapture = false; // !! works only for one move backwards
+    CastlingMemory castlingMemory = new();
 
-    public Chess() { 
+    public Chess() {
         ResetChessBoard(); 
-    }
-
-    public Chess( Tile[,] b )
-    {
-       for(int i = 0; i < 8; i++)
-           for( int j = 0; j < 8; j++)
-                if( b[ i,j ] is Piece p)
-                    board[ i,j ] = p.GetCopy();
     }
 
     public void ResetChessBoard()
@@ -60,23 +72,22 @@ class Chess
         // if it is capture, remember captured piece 
         // make the move 
         // return true
-        WriteLine("\nMake move initiated\n");
-        if (winner != Player.NO_ONE || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
+        if (!IsMoveLegit(move))
             return false;
-        WriteLine("Passed first checks");
-        if (!IsLegit(move))
-            return false;
-        WriteLine("Passed second check");
 
-        if (IsCapture(move)) {
+        if (IsCapture(move))
+        {
             lastCapture = board[move.to.row, move.to.col];
             lastMoveWasCapture = true;
-        } else {
+        }
+        else
+        {
             lastMoveWasCapture = false;
         }
 
         Move(move);
-        
+        MaintainCastlingMemory(move);
+        RookCastling(move);
         PawnToQueen(move);
 
         Player prevturn = turn;
@@ -84,10 +95,81 @@ class Chess
 
         check = IsPlayerInCheck();
         WriteLine("Check status: " + check);
-        if ( check && IsCheckMate() )
+        if (check && IsCheckMate())
             winner = prevturn;
 
         return true;
+    }
+
+    bool IsMoveLegit(Move move) {
+        if (winner != Player.NO_ONE || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
+            return false;
+        WriteLine("Passed first checks");
+        if (!IsLegit(move))
+            return false;
+        WriteLine("Passed second check");
+        return true;
+    }
+
+    void MaintainCastlingMemory(Move move)
+    {
+        // set true to castling memories if rooks or kings move 
+        int toRow = move.to.row;
+        int toCol = move.to.col;
+        if(board[ toRow, toCol ] is King k)
+        {
+            if ( k.owner == Player.BLACK)
+                castlingMemory.BlackKingMoved = true;
+            if ( k.owner == Player.WHITE)
+                castlingMemory.WhiteKingMoved = true;
+        }
+
+        if(board[toRow, toCol] is Rook r)
+        {
+            if(r.owner == Player.BLACK && move.from.row == 0)
+            {
+                if ( move.from.col == 0 )
+                    castlingMemory.Black_A_RookMoved = true;
+                if ( move.from.col == 7 )
+                    castlingMemory.Black_H_RookMoved = true;
+            }
+
+            if(r.owner == Player.WHITE && move.from.row == 7)
+            {
+                if ( move.from.col == 0 )
+                    castlingMemory.White_A_RookMoved = true;
+                if ( move.from.col == 7 )
+                    castlingMemory.White_H_RookMoved = true;
+            }
+        }
+    }
+
+    void RookCastling(Move move)
+    {
+        // if the move is castling, also make the second move of the rook
+        int toRow = move.to.row;
+        int toCol = move.to.col;
+        int fromRow = move.from.row;
+        int fromCol = move.from.col;
+
+        if(board[toRow, toCol] is King k)
+        {
+            if(toRow == 7 && fromRow == 7 && fromCol == 4 && k.owner == Player.WHITE)
+            {
+                if (toCol == 6) // it is whites short castling
+                    Move(new Move((7, 7), (7, 5)));
+                if (toCol == 2) // it is whites long castling 
+                    Move(new Move((7, 0), (7, 3)));
+            }
+
+            if (toRow == 0 && fromRow == 0 && fromCol == 4 && k.owner == Player.BLACK)
+            {
+                if (toCol == 6) // it is blacks short castling
+                    Move(new Move((0, 7), (0, 5)));
+                if (toCol == 2) // it is blacks long castling 
+                    Move(new Move((0, 0), (0, 3)));
+            }
+        }
     }
 
     bool IsCapture(Move move) => board[move.to.row, move.to.col] == null; 
@@ -121,7 +203,7 @@ class Chess
             if ( !deepcopy.IsPlayerInCheck() )
                 return false;
 
-            deepcopy.Unmove(new Move(move.to, move.from));
+            deepcopy.Unmove( move );
         }
 
         return true;
@@ -142,27 +224,21 @@ class Chess
         return result;
     }
 
-    Chess GetDeepCopy() 
-    {
-        // create new instance of chess board
-        // set all tiles to null;
-        // for all tiles if there is a piece create new instance of it
-        // and set it to coresponding board tile
-        // copy properties of chess 
-        // return chess
-        Chess deepcopy = new( board );
-        // copy properties:
-        deepcopy.turn = turn;
-        deepcopy.check = check;
+    Chess GetDeepCopy() {
+        Chess deepcopy = (Chess) this.MemberwiseClone();
+        // now it is shallow copy, we must create new incstances of reference types:
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                if (board[i, j] is Piece p)
+                    deepcopy.board[i, j] = p.GetCopy();
         deepcopy.lastCapture = lastCapture;
-        deepcopy.lastMoveWasCapture = lastMoveWasCapture;
-        deepcopy.winner = winner;
+        deepcopy.castlingMemory = castlingMemory.ShallowCopy();
         return deepcopy;
     }
 
     public void Unmove( Move move )
     {
-        Move(move);
+        Move(new Move(move.to, move.from) );
         if(lastMoveWasCapture && lastCapture is Piece p) 
             board[p.position.row, p.position.col] = p;
     }
@@ -255,21 +331,55 @@ class Chess
         WriteLine("GetLegitMoves 1");
 
         // in case user requested move of player the doesnt have the turn to move:
-        if (board[from.row, from.col] is Piece pp)
-        {
-            if (turn != pp.owner)
-                return result;
-        }
+        if (board[from.row, from.col] is Piece pp && turn != pp.owner)
+            return result;
 
         WriteLine("GetLegitMoves 2");
 
-        WriteLine(board[from.row, from.col]);
-
         if (board[from.row, from.col] is Piece p)
-            result = p.PossibleMoves(board);
+            result = p.PossibleMoves( board );
 
-        WriteLine(result.Count);
+        // Now we must:
+        //              a. filter out moves that would put players king into check
+        //              b. in case the moving piece is king, consider adding options to do castling
+        List<Move> filteredResult = FilterCheck( result );
+        //foreach (Move castling in PossibleCastlings())
+        //    result.Add(castling);
 
+        WriteLine(filteredResult.Count);
+        return filteredResult;
+    }
+
+    List<Move> FilterCheck( List<Move> possibleMoves )
+    {
+        // filter out all moves that would put players king into check
+        // make deepcopy of current board
+        // move all moves
+        // check if king is in check (! king of current player)
+        // if king is not in check add this move to result
+        Chess deepcopy = GetDeepCopy();
+        List<Move> result = new();
+        foreach(Move move in possibleMoves)
+        {
+            deepcopy.Move( move );
+            // is king in check checks the king whose turn it is! I must check the player that just move!!
+            bool checkIsPossible = false;
+            (int row, int col) = deepcopy.GetKingsCoordinates( turn ); // this needs to be here we also may be moving the king
+
+            for (int i = 0; i < 8; i++)
+                for (int j = 0; j < 8; j++)
+                    if (deepcopy.board[i, j] is Piece p && turn != p.owner)
+                        foreach (Move enemyMove in p.PossibleMoves(deepcopy.board))
+                            if (enemyMove.to.row == row && enemyMove.to.col == col)
+                                checkIsPossible = true;
+
+            if ( !checkIsPossible )
+                result.Add(move);
+
+            deepcopy.Unmove( move );
+        }
         return result;
     }
+
+
 }
