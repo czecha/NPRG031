@@ -2,91 +2,98 @@ using System;
 using System.Collections.Generic;
 using static System.Console;
 
-
-
 class Chess
 {
-    public Tile[,] board;
-    public Player turn;
-    public Player winner;
-    public bool check;
+    public Tile[,] board = new Tile[8, 8];
+    public Player turn = Player.WHITE;
+    public Player winner = Player.NO_ONE;
+    public bool check = false;
+    Tile lastCapture = null;
+    bool lastMoveWasCapture = false; // !! works only for one move backwards
 
-    public Chess()
-    {
-        check = false;
-        ResetChessBoard();
+    public Chess() { 
+        ResetChessBoard(); 
     }
 
-    private Chess(Tile[,] b, Player t)
+    public Chess( Tile[,] b )
     {
-        // this constructor is private on purpose
-        // because its use is to generate possible future move, without making the move on same board
-        // for the purpose of checking check-mate condition
-        check = false;
-        winner = Player.NO_ONE;
-        turn = t == Player.WHITE ? Player.WHITE : Player.BLACK;
-        board = new Tile[8, 8]; // null is empty tile
-
-        // copy all Tiles , generating new instances:
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 8; j++)
-                if (b[i, j] is Piece p)
-                    board[i, j] = p.GetCopy();
+       for(int i = 0; i < 8; i++)
+           for( int j = 0; j < 8; j++)
+                if( b[ i,j ] is Piece p)
+                    board[ i,j ] = p.GetCopy();
     }
 
     public void ResetChessBoard()
     {
-        turn = Player.WHITE;
-        winner = Player.NO_ONE;
-        board = new Tile[8, 8];
-
         // set the tiles to contain initial configuration of chess board
         for (int j = 0; j < 8; j++)
         {
-            board[1, j] = new Pawn( (1, j) , Player.BLACK);
-            board[6, j] = new Pawn( (6, j) , Player.WHITE);
+            board[1, j] = new Pawn((1, j), Player.BLACK);
+            board[6, j] = new Pawn((6, j), Player.WHITE);
         }
 
-        board[0, 0] = new Rook(   (0, 0), Player.BLACK);
-        board[0, 7] = new Rook(   (0, 7), Player.BLACK);
-        board[7, 0] = new Rook(   (7, 0), Player.WHITE);
-        board[7, 7] = new Rook(   (7, 7), Player.WHITE);
-        board[0, 1] = new Knight( (0, 1), Player.BLACK);
-        board[0, 6] = new Knight( (0, 6), Player.BLACK);
-        board[7, 1] = new Knight( (7, 1), Player.WHITE);
-        board[7, 6] = new Knight( (7, 6), Player.WHITE);
-        board[0, 2] = new Bishop( (0, 2), Player.BLACK);
-        board[0, 5] = new Bishop( (0, 5), Player.BLACK);
-        board[7, 2] = new Bishop( (7, 2), Player.WHITE);
-        board[7, 5] = new Bishop( (7, 5), Player.WHITE);
-        board[0, 3] = new Queen(  (0, 3), Player.BLACK);
-        board[7, 3] = new Queen(  (7, 3), Player.WHITE);
-        board[0, 4] = new King(   (0, 4), Player.BLACK);
-        board[7, 4] = new King(   (7, 4), Player.WHITE);
+        board[0, 0] = new Rook((0, 0), Player.BLACK);
+        board[0, 7] = new Rook((0, 7), Player.BLACK);
+        board[7, 0] = new Rook((7, 0), Player.WHITE);
+        board[7, 7] = new Rook((7, 7), Player.WHITE);
+        board[0, 1] = new Knight((0, 1), Player.BLACK);
+        board[0, 6] = new Knight((0, 6), Player.BLACK);
+        board[7, 1] = new Knight((7, 1), Player.WHITE);
+        board[7, 6] = new Knight((7, 6), Player.WHITE);
+        board[0, 2] = new Bishop((0, 2), Player.BLACK);
+        board[0, 5] = new Bishop((0, 5), Player.BLACK);
+        board[7, 2] = new Bishop((7, 2), Player.WHITE);
+        board[7, 5] = new Bishop((7, 5), Player.WHITE);
+        board[0, 3] = new Queen((0, 3), Player.BLACK);
+        board[7, 3] = new Queen((7, 3), Player.WHITE);
+        board[0, 4] = new King((0, 4), Player.BLACK);
+        board[7, 4] = new King((7, 4), Player.WHITE);
     }
 
-    public bool MakeMove(Move move)
+    public bool MakeLegitMove(Move move)
     {
         // return false if:
         //          a. the game is over
         //          b. (from or to) coordinates are outside of board
         //          c. from is emptyTile
         //          d. if to is not in the set of legitimate moves
+        // if it is capture, remember captured piece 
         // make the move 
         // return true
-
         WriteLine("\nMake move initiated\n");
-
         if (winner != Player.NO_ONE || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
             return false;
-
         WriteLine("Passed first checks");
-
         if (!IsLegit(move))
             return false;
-
         WriteLine("Passed second check");
 
+        if (IsCapture(move)) {
+            lastCapture = board[move.to.row, move.to.col];
+            lastMoveWasCapture = true;
+        } else {
+            lastMoveWasCapture = false;
+        }
+
+        Move(move);
+        
+        PawnToQueen(move);
+
+        Player prevturn = turn;
+        turn = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
+
+        check = IsPlayerInCheck();
+        WriteLine("Check status: " + check);
+        if ( check && IsCheckMate() )
+            winner = prevturn;
+
+        return true;
+    }
+
+    bool IsCapture(Move move) => board[move.to.row, move.to.col] == null; 
+
+    void Move(Move move)
+    {
         board[move.to.row, move.to.col] = board[move.from.row, move.from.col];
         if (board[move.to.row, move.to.col] is Piece p)
         {
@@ -94,59 +101,71 @@ class Chess
             p.position.col = move.to.col; // position is being tracked in two different places
         }
         board[move.from.row, move.from.col] = null;
-        PawnToQueen(move);
-
-        turn = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
-        check = IsPlayerInCheck(turn);
-
-        if (check)
-        {
-            // can king escape to not check position?
-            // if not, it is game over for not in turn player
-            if (KingCannotEscape())
-                winner = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
-        }
-
-        return true;
     }
 
-    bool KingCannotEscape()
+    bool IsCheckMate()
     {
-        (int x, int y) = GetKingsCoordinates(turn);
-        King king = (King)board[x, y];
-        Player player = turn == Player.WHITE ? Player.WHITE : Player.BLACK;
-        // foreach possible move of inTurnKing
-        //      check if that move would be not in check 
-        //              // if so return false (since you found at least one move, where the king stays alive )
-        // return true
+        // pseudocode:
+        // 1. foreach possible Move of current player
+        // 2.     init new instance of chess and make this move 
+        // 3.     if the board configuration is not check current player (from now)
+        // 4.         return false
+        // 5. return true
+        //
+        // --> if there is no move current player can make to escape check, than it is checkmate
+        Chess deepcopy = GetDeepCopy();
 
-        foreach (Move move in king.PossibleMoves(board))
+        foreach (Move move in GetAllPlayersMoves() )
         {
-            // make the move on new instance of chess
-            // look if king is in check
-            // if not return false
-            Chess copy = new (board, player);
-            copy.MakeMove(move);
-            if (!copy.IsPlayerInCheck(player))
-            {
-                WriteLine("King CAN escape!");
+            deepcopy.Move( move );
+            if ( !deepcopy.IsPlayerInCheck() )
                 return false;
-            }
+
+            deepcopy.Unmove(new Move(move.to, move.from));
         }
 
-        WriteLine("King cannot ESCAPE!");
         return true;
     }
 
+    List<Move> GetAllPlayersMoves()
+    {
+        // List of moves
+        // for all pieces of inturn player 
+        //      add all moves of the piece
+        // return list of moves
+        List<Move> result = new();
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                if ( board[i, j] is Piece p && p.owner == turn )
+                    foreach ( Move move in p.PossibleMoves(board) )
+                        result.Add(move);
+        return result;
+    }
 
-    //bool IsCapture(Move move)
-    //{
-    //    int x = move.to.row;
-    //    int y = move.to.col;
-    //    if (board[x, y] == null)
-    //        return false;
-    //    return true;
-    //}
+    Chess GetDeepCopy() 
+    {
+        // create new instance of chess board
+        // set all tiles to null;
+        // for all tiles if there is a piece create new instance of it
+        // and set it to coresponding board tile
+        // copy properties of chess 
+        // return chess
+        Chess deepcopy = new( board );
+        // copy properties:
+        deepcopy.turn = turn;
+        deepcopy.check = check;
+        deepcopy.lastCapture = lastCapture;
+        deepcopy.lastMoveWasCapture = lastMoveWasCapture;
+        deepcopy.winner = winner;
+        return deepcopy;
+    }
+
+    public void Unmove( Move move )
+    {
+        Move(move);
+        if(lastMoveWasCapture && lastCapture is Piece p) 
+            board[p.position.row, p.position.col] = p;
+    }
 
     bool OutsideOfBoard(Move move)
     {
@@ -175,7 +194,6 @@ class Chess
             }
         }
 
-
         WriteLine("Is legit is false");
         return false;
     }
@@ -188,7 +206,7 @@ class Chess
             board[move.to.row, move.to.col] = new Queen( (move.to.row, move.to.col), pawn.owner);
     }
 
-    bool IsPlayerInCheck(Player player)
+    bool IsPlayerInCheck()
     {
         // pseudocode: 
         // for all notInTurn's pieces 
@@ -200,10 +218,10 @@ class Chess
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 if (board[i, j] is Piece p)
-                    if ((player == Player.WHITE && p.owner == Player.BLACK) || (player == Player.BLACK && p.owner == Player.WHITE))
+                    if (( turn  == Player.WHITE && p.owner == Player.BLACK) || ( turn == Player.BLACK && p.owner == Player.WHITE))
                         notInTurnPieces.Add(p);
 
-        (int x, int y) = GetKingsCoordinates(player);
+        (int x, int y) = GetKingsCoordinates( turn );
 
         foreach (Piece p in notInTurnPieces)
             foreach (Move move in p.PossibleMoves(board))
@@ -217,9 +235,9 @@ class Chess
     {
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
-                if (board[i, j] is King king)
-                    if ((player == Player.WHITE && king.owner == Player.BLACK) || (player == Player.BLACK && king.owner == Player.WHITE))
-                        return (i, j);
+                if (board[i, j] is King king && player == king.owner)
+                    return (i, j);
+        WriteLine("Ouch");
         throw new Exception("FATAL ERROR, one of the kings is not on board");
     }
 
