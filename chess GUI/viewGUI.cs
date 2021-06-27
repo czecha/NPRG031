@@ -164,19 +164,17 @@ class ViewGTK : Window {
 }
 
 /*
-missing features: 
-
-3. class King is capable of giving Castleing moves correctly 
-4. all piece classes correctly disallow move, if it would put their own King into check position  
+missing features:
 5. ANIMACE prechodu figurky
 
 Done    1. class chess evaluates after move whether it is check, view informs about this
-Done?   2. class chess evaluates after move whether is is check-mate and view falls to end game state 
+Done    2. class chess evaluates after move whether is is check-mate and view falls to end game state 
+Done    3. class King is capable of giving Castleing moves correctly 
+Done    4. all piece classes correctly disallow move, if it would put their own King into check position  
 Done    6. pawn se po prichodu na posledni row transformuje na kralovnu */
 
-
 /*
- Castleing architecture:
+ Castling architecture:
  six booleans in separate class to not populate chess namespace 
     white_A_RookMoved >> A stands for column 
     white_H_RookMoved >> H stands for column 
