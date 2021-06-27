@@ -156,6 +156,9 @@ class Chess
         {
             if(toRow == 7 && fromRow == 7 && fromCol == 4 && k.owner == Player.WHITE)
             {
+                // this part trusts that the castling move has been added to possible
+                // moves when castling is possible 
+                // therefore it trusts that the rook is at its position
                 if (toCol == 6) // it is whites short castling
                     Move(new Move((7, 7), (7, 5)));
                 if (toCol == 2) // it is whites long castling 
@@ -226,12 +229,20 @@ class Chess
 
     Chess GetDeepCopy() {
         Chess deepcopy = (Chess) this.MemberwiseClone();
-        // now it is shallow copy, we must create new incstances of reference types:
+        // now it is shallow copy, we must create new instances of reference types:
+        deepcopy.board = new Tile[8, 8];
+
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 if (board[i, j] is Piece p)
                     deepcopy.board[i, j] = p.GetCopy();
-        deepcopy.lastCapture = lastCapture;
+
+        if(lastCapture is Piece pp) {
+            deepcopy.lastCapture = pp.GetCopy();
+        } else {
+            deepcopy.lastCapture = null;
+        }
+        
         deepcopy.castlingMemory = castlingMemory.ShallowCopy();
         return deepcopy;
     }
@@ -324,30 +335,71 @@ class Chess
         //          b. position's coordinate is outside of board
         //          c. board[position] is emptyTile
         // else get the list of legitimate moves
+        int r = from.row;
+        int c = from.col;
         List<Move> result = new ();
-        if (winner != Player.NO_ONE || OutsideOfBoard(from) || board[from.row, from.col] == null)
+        if (winner != Player.NO_ONE || OutsideOfBoard(from) || board[r, c] == null)
             return result;
 
         WriteLine("GetLegitMoves 1");
 
         // in case user requested move of player the doesnt have the turn to move:
-        if (board[from.row, from.col] is Piece pp && turn != pp.owner)
+        if (board[ r, c] is Piece pp && turn != pp.owner)
             return result;
 
         WriteLine("GetLegitMoves 2");
 
-        if (board[from.row, from.col] is Piece p)
+        if (board[ r, c] is Piece p)
             result = p.PossibleMoves( board );
 
         // Now we must:
         //              a. filter out moves that would put players king into check
         //              b. in case the moving piece is king, consider adding options to do castling
         List<Move> filteredResult = FilterCheck( result );
-        //foreach (Move castling in PossibleCastlings())
-        //    result.Add(castling);
 
-        WriteLine(filteredResult.Count);
+        // allow castling foreach only if king has been clicked and is at column 4
+        if( board[r, c] is King k && c == 4 )
+            foreach ( Move castling in PossibleCastlings( (r,c), k ) ) 
+                filteredResult.Add(castling);
+        
+        WriteLine("Filtered results count: " + filteredResult.Count);
         return filteredResult;
+    }
+
+    List<Move> PossibleCastlings( (int r, int c) from , King k )
+    {
+        int r = from.r; int c = from.c;
+        List<Move> castlings = new();
+        if(k.owner == Player.WHITE && r == 7 && c == 4 && !castlingMemory.WhiteKingMoved)
+        {
+            // white king is moving from its initial position and has no moved yet:
+            // inspect whether long or short castling is possible based on rooks and free tiles 
+            if(!castlingMemory.White_A_RookMoved)
+            {
+                // long castling is possible, check if tiles [7, 1], [7, 2], [7, 3] are empty
+                // if so , castling is possible
+                if (board[7, 1] == null && board[7, 2] == null && board[7, 3] == null)
+                    castlings.Add( new Move( (7, 4), (7, 2) ) );
+            }
+
+            if(!castlingMemory.White_H_RookMoved)
+            {
+                // check and do short castling of white
+                if (board[7, 6] == null && board[7, 5] == null )
+                    castlings.Add(new Move((7, 4), (7, 6)));
+            }
+        }
+
+        if(k.owner == Player.BLACK && r == 0 && c == 4 && !castlingMemory.BlackKingMoved)
+        {
+            if (!castlingMemory.Black_A_RookMoved && board[0, 1] == null && board[0, 2] == null && board[0, 3] == null)
+                castlings.Add(new Move((0, 4), (0, 2)));
+
+            if (!castlingMemory.Black_H_RookMoved && board[0, 6] == null && board[0, 5] == null)
+                castlings.Add(new Move((0, 4), (0, 6)));
+        }
+
+        return castlings;
     }
 
     List<Move> FilterCheck( List<Move> possibleMoves )
@@ -358,7 +410,7 @@ class Chess
         // check if king is in check (! king of current player)
         // if king is not in check add this move to result
         Chess deepcopy = GetDeepCopy();
-        List<Move> result = new();
+        List<Move> filtered = new();
         foreach(Move move in possibleMoves)
         {
             deepcopy.Move( move );
@@ -374,11 +426,11 @@ class Chess
                                 checkIsPossible = true;
 
             if ( !checkIsPossible )
-                result.Add(move);
+                filtered.Add(move);
 
             deepcopy.Unmove( move );
         }
-        return result;
+        return filtered;
     }
 
 
