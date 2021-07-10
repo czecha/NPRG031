@@ -374,7 +374,7 @@ class Chess
         if (!enPassantPossible)
             return enPassant; // empty list 
 
-        // else check if there are pawns in neighbourhood of the pawn that jumped two tiles
+        // else check if there are pawns in neighbourhood of the pawn that jumped two  tiles
         // that would have the opportunity to do this capture 
         // ! beware this capture is tricky. It is the only capture that doesnt capture piece on the tile that it steps on
         // Which in turn destroys the code logic. 
