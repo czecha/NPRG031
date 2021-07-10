@@ -372,32 +372,39 @@ class Chess
         {
             // white king is moving from its initial position and has no moved yet:
             // inspect whether long or short castling is possible based on rooks and free tiles 
-            if(!castlingMemory.White_A_RookMoved)
-            {
-                // long castling is possible, check if tiles [7, 1], [7, 2], [7, 3] are empty
-                // if so , castling is possible
-                if (board[7, 1] == null && board[7, 2] == null && board[7, 3] == null)
-                    castlings.Add( new Move( (7, 4), (7, 2) ) );
-            }
-
-            if(!castlingMemory.White_H_RookMoved)
-            {
-                // check and do short castling of white
-                if (board[7, 6] == null && board[7, 5] == null )
-                    castlings.Add(new Move((7, 4), (7, 6)));
-            }
+            // long castling is possible, check if tiles [7, 1], [7, 2], [7, 3] are empty
+            // also check if tiles 7, 2 and 7, 3 are not under check 
+            // if so , castling is possible
+            if (!castlingMemory.White_A_RookMoved && board[7, 1] == null && board[7, 2] == null && board[7, 3] == null && TilesNotUnderCheck((7, 2), (7, 3)))
+                castlings.Add( new Move((7, 4), (7, 2)));
+            
+            // check and do short castling of white
+            if (!castlingMemory.White_H_RookMoved && board[7, 6] == null && board[7, 5] == null && TilesNotUnderCheck((7, 5), (7, 6)))
+                castlings.Add(new Move((7, 4), (7, 6)));
         }
 
         if(k.owner == Player.Black && r == 0 && c == 4 && !castlingMemory.BlackKingMoved)
         {
-            if (!castlingMemory.Black_A_RookMoved && board[0, 1] == null && board[0, 2] == null && board[0, 3] == null)
+            if (!castlingMemory.Black_A_RookMoved && board[0, 1] == null && board[0, 2] == null && board[0, 3] == null && TilesNotUnderCheck((0, 2), (0, 3)))
                 castlings.Add(new Move((0, 4), (0, 2)));
 
-            if (!castlingMemory.Black_H_RookMoved && board[0, 6] == null && board[0, 5] == null)
+            if (!castlingMemory.Black_H_RookMoved && board[0, 6] == null && board[0, 5] == null && TilesNotUnderCheck((0, 5), (0, 6)))
                 castlings.Add(new Move((0, 4), (0, 6)));
         }
 
         return castlings;
+    }
+
+    bool TilesNotUnderCheck((int r, int c) firstTile, (int r, int c) secondTile)
+    {
+        bool tilesNotUnderCheck = true;
+        for (int i = 0; i < 8; i++)
+            for (int j = 0; j < 8; j++)
+                if (board[i, j] is Piece p && turn != p.owner)
+                    foreach (Move enemyMove in p.PossibleMoves(board))
+                        if ((enemyMove.to.row == firstTile.r && enemyMove.to.col == firstTile.c) || (enemyMove.to.row == secondTile.r && enemyMove.to.col == secondTile.c))
+                            tilesNotUnderCheck = false;
+        return tilesNotUnderCheck;
     }
 
     List<Move> FilterCheck( List<Move> possibleMoves )
