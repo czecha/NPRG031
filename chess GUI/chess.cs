@@ -2,30 +2,12 @@ using System;
 using System.Collections.Generic;
 using static System.Console;
 
-/*
- Known bugs:
-
- Bug 1
-    white epawn to col 4
-    black dpawn to col 3
-    white fbishop to row 3, col 1
-
-    the bug is black knight jumps to defend king by itself also leaving black to play
-    
- Bug 2
-    white dpawn to col 4
-    black epan to col 3
-    white dpan to col 3
-
-    the bug is white pawn captures the black pawn by this move, which is obviously not correct
-    additionaly all pawns always capture in this manner
- */
 
 class Chess
 {
     public Tile[,] board = new Tile[8, 8];
-    public Player turn = Player.WHITE;
-    public Player winner = Player.NO_ONE;
+    public Player turn = Player.White;
+    public Player winner = Player.No_One;
     public bool check = false;
     Tile lastCapture = null;
     bool lastMoveWasCapture = false; // !! works only for one move backwards
@@ -40,26 +22,26 @@ class Chess
         // set the tiles to contain initial configuration of chess board
         for (int j = 0; j < 8; j++)
         {
-            board[1, j] = new Pawn((1, j), Player.BLACK);
-            board[6, j] = new Pawn((6, j), Player.WHITE);
+            board[1, j] = new Pawn((1, j), Player.Black);
+            board[6, j] = new Pawn((6, j), Player.White);
         }
 
-        board[0, 0] = new Rook((0, 0), Player.BLACK);
-        board[0, 7] = new Rook((0, 7), Player.BLACK);
-        board[7, 0] = new Rook((7, 0), Player.WHITE);
-        board[7, 7] = new Rook((7, 7), Player.WHITE);
-        board[0, 1] = new Knight((0, 1), Player.BLACK);
-        board[0, 6] = new Knight((0, 6), Player.BLACK);
-        board[7, 1] = new Knight((7, 1), Player.WHITE);
-        board[7, 6] = new Knight((7, 6), Player.WHITE);
-        board[0, 2] = new Bishop((0, 2), Player.BLACK);
-        board[0, 5] = new Bishop((0, 5), Player.BLACK);
-        board[7, 2] = new Bishop((7, 2), Player.WHITE);
-        board[7, 5] = new Bishop((7, 5), Player.WHITE);
-        board[0, 3] = new Queen((0, 3), Player.BLACK);
-        board[7, 3] = new Queen((7, 3), Player.WHITE);
-        board[0, 4] = new King((0, 4), Player.BLACK);
-        board[7, 4] = new King((7, 4), Player.WHITE);
+        board[0, 0] = new Rook((0, 0), Player.Black);
+        board[0, 7] = new Rook((0, 7), Player.Black);
+        board[7, 0] = new Rook((7, 0), Player.White);
+        board[7, 7] = new Rook((7, 7), Player.White);
+        board[0, 1] = new Knight((0, 1), Player.Black);
+        board[0, 6] = new Knight((0, 6), Player.Black);
+        board[7, 1] = new Knight((7, 1), Player.White);
+        board[7, 6] = new Knight((7, 6), Player.White);
+        board[0, 2] = new Bishop((0, 2), Player.Black);
+        board[0, 5] = new Bishop((0, 5), Player.Black);
+        board[7, 2] = new Bishop((7, 2), Player.White);
+        board[7, 5] = new Bishop((7, 5), Player.White);
+        board[0, 3] = new Queen((0, 3), Player.Black);
+        board[7, 3] = new Queen((7, 3), Player.White);
+        board[0, 4] = new King((0, 4), Player.Black);
+        board[7, 4] = new King((7, 4), Player.White);
     }
 
     public bool MakeLegitMove(Move move)
@@ -91,7 +73,7 @@ class Chess
         PawnToQueen(move);
 
         Player prevturn = turn;
-        turn = (turn == Player.WHITE) ? Player.BLACK : Player.WHITE;
+        turn = (turn == Player.White) ? Player.Black : Player.White;
 
         check = IsPlayerInCheck();
         WriteLine("Check status: " + check);
@@ -102,7 +84,7 @@ class Chess
     }
 
     bool IsMoveLegit(Move move) {
-        if (winner != Player.NO_ONE || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
+        if (winner != Player.No_One || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
             return false;
         WriteLine("Passed first checks");
         if (!IsLegit(move))
@@ -118,15 +100,15 @@ class Chess
         int toCol = move.to.col;
         if(board[ toRow, toCol ] is King k)
         {
-            if ( k.owner == Player.BLACK)
+            if ( k.owner == Player.Black)
                 castlingMemory.BlackKingMoved = true;
-            if ( k.owner == Player.WHITE)
+            if ( k.owner == Player.White)
                 castlingMemory.WhiteKingMoved = true;
         }
 
         if(board[toRow, toCol] is Rook r)
         {
-            if(r.owner == Player.BLACK && move.from.row == 0)
+            if(r.owner == Player.Black && move.from.row == 0)
             {
                 if ( move.from.col == 0 )
                     castlingMemory.Black_A_RookMoved = true;
@@ -134,7 +116,7 @@ class Chess
                     castlingMemory.Black_H_RookMoved = true;
             }
 
-            if(r.owner == Player.WHITE && move.from.row == 7)
+            if(r.owner == Player.White && move.from.row == 7)
             {
                 if ( move.from.col == 0 )
                     castlingMemory.White_A_RookMoved = true;
@@ -154,7 +136,7 @@ class Chess
 
         if(board[toRow, toCol] is King k)
         {
-            if(toRow == 7 && fromRow == 7 && fromCol == 4 && k.owner == Player.WHITE)
+            if(toRow == 7 && fromRow == 7 && fromCol == 4 && k.owner == Player.White)
             {
                 // this part trusts that the castling move has been added to possible
                 // moves when castling is possible 
@@ -165,7 +147,7 @@ class Chess
                     Move(new Move((7, 0), (7, 3)));
             }
 
-            if (toRow == 0 && fromRow == 0 && fromCol == 4 && k.owner == Player.BLACK)
+            if (toRow == 0 && fromRow == 0 && fromCol == 4 && k.owner == Player.Black)
             {
                 if (toCol == 6) // it is blacks short castling
                     Move(new Move((0, 7), (0, 5)));
@@ -289,7 +271,7 @@ class Chess
 
     void PawnToQueen(Move move)
     {
-        if (board[move.to.row, move.to.col] is Pawn pawn && ((pawn.owner == Player.BLACK && move.to.row == 7) || (pawn.owner == Player.WHITE && move.to.row == 0)))
+        if (board[move.to.row, move.to.col] is Pawn pawn && ((pawn.owner == Player.Black && move.to.row == 7) || (pawn.owner == Player.White && move.to.row == 0)))
             board[move.to.row, move.to.col] = new Queen( (move.to.row, move.to.col), pawn.owner);
     }
 
@@ -305,7 +287,7 @@ class Chess
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
                 if (board[i, j] is Piece p)
-                    if (( turn  == Player.WHITE && p.owner == Player.BLACK) || ( turn == Player.BLACK && p.owner == Player.WHITE))
+                    if (( turn  == Player.White && p.owner == Player.Black) || ( turn == Player.Black && p.owner == Player.White))
                         notInTurnPieces.Add(p);
 
         (int x, int y) = GetKingsCoordinates( turn );
@@ -338,7 +320,7 @@ class Chess
         int r = from.row;
         int c = from.col;
         List<Move> result = new ();
-        if (winner != Player.NO_ONE || OutsideOfBoard(from) || board[r, c] == null)
+        if (winner != Player.No_One || OutsideOfBoard(from) || board[r, c] == null)
             return result;
 
         WriteLine("GetLegitMoves 1");
@@ -370,7 +352,7 @@ class Chess
     {
         int r = from.r; int c = from.c;
         List<Move> castlings = new();
-        if(k.owner == Player.WHITE && r == 7 && c == 4 && !castlingMemory.WhiteKingMoved)
+        if(k.owner == Player.White && r == 7 && c == 4 && !castlingMemory.WhiteKingMoved)
         {
             // white king is moving from its initial position and has no moved yet:
             // inspect whether long or short castling is possible based on rooks and free tiles 
@@ -390,7 +372,7 @@ class Chess
             }
         }
 
-        if(k.owner == Player.BLACK && r == 0 && c == 4 && !castlingMemory.BlackKingMoved)
+        if(k.owner == Player.Black && r == 0 && c == 4 && !castlingMemory.BlackKingMoved)
         {
             if (!castlingMemory.Black_A_RookMoved && board[0, 1] == null && board[0, 2] == null && board[0, 3] == null)
                 castlings.Add(new Move((0, 4), (0, 2)));

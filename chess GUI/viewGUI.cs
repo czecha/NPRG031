@@ -59,7 +59,7 @@ class ViewGTK : Window {
         for(int i = 0; i < 8; i++) {
             for(int j = 0; j < 8; j++) {
                 if(chess.board[i, j] is Piece piece) {
-                    owner = piece.owner == Player.WHITE ? "w" : "b";
+                    owner = piece.owner == Player.White ? "w" : "b";
 
                     Ptype = "k";
                     if(piece is Queen) Ptype = "q";
@@ -111,7 +111,7 @@ class ViewGTK : Window {
         string checkMSG = chess.check ? ", king is in CHECK!" : "";
         string title = "Chess graphical interface";
         Title = title + ": white's turn" + checkMSG;
-        if(chess.turn == Player.BLACK )
+        if(chess.turn == Player.Black )
             Title = title + ": black's turn" + checkMSG;
 
         InformWinner();
@@ -122,13 +122,13 @@ class ViewGTK : Window {
 
     void InformWinner()
     {
-        if (chess.winner != Player.NO_ONE)
+        if (chess.winner != Player.No_One)
             Title = "Game over! The winner is " + chess.winner + ".";
     }
 
     bool CheckWin() {
 
-        if( chess.winner == Player.NO_ONE )
+        if( chess.winner == Player.No_One )
             return false;
         
         clickedOnWinner++;

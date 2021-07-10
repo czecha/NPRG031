@@ -23,8 +23,8 @@ class Move {
         this.to = to;
     }
 }
-
-enum Player { WHITE, BLACK, NO_ONE }
+ 
+enum Player { White, Black, No_One }
 
 abstract class Tile { }
 
@@ -53,9 +53,9 @@ abstract class Piece : Tile {
     }
 
     protected bool IsInsideBoard( int x, int y ) => x >= 0 && x <= 7 && y >= 0 && y <= 7;
-    protected bool IsEnemy( Piece p ) => ( owner == Player.WHITE && p.owner == Player.BLACK ) || ( owner == Player.BLACK && p.owner == Player.WHITE );
-    public bool IsWhite() => owner == Player.WHITE;
-    public bool IsBlack() => owner == Player.BLACK;
+    protected bool IsEnemy( Piece p ) => ( owner == Player.White && p.owner == Player.Black ) || ( owner == Player.Black && p.owner == Player.White );
+    public bool IsWhite() => owner == Player.White;
+    public bool IsBlack() => owner == Player.Black;
 }
 
 abstract class InfiniteMover : Piece {
