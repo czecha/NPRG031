@@ -65,6 +65,7 @@ class Chess
         Move(move);
         MaintainEnPassantMemory(move);
         MaintainCastlingMemory(move);
+        enPassantCapture(move);
         RookCastling(move);
         PawnToQueen(move);
 
@@ -77,6 +78,21 @@ class Chess
             winner = prevturn;
 
         return true;
+    }
+
+    // if the move was enpassant capture, remove the apropriate pawn from board, and save info about last capture
+    void enPassantCapture(Move move)
+    {
+        int r = move.to.row;
+        int c = move.to.col;
+
+        if(board[r, c] is Pawn && move.from.col != move.to.col && !lastMoveWasCapture)
+        {
+            lastMoveWasCapture = true;
+            int backwards = turn == Player.White ? 1 : -1;
+            lastCapture = board[r + backwards, c];
+            board[r + backwards, c] = null;
+        }
     }
 
     void MaintainEnPassantMemory(Move move)
