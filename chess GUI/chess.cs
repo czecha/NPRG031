@@ -46,21 +46,19 @@ class Chess
         board[7, 4] = new King((7, 4), Player.White);
     }
 
+    // return false if:
+    //          a. the game is over
+    //          b. (from or to) coordinates are outside of board
+    //          c. from is emptyTile
+    //          d. if to is not in the set of legitimate moves
+    // if it is capture, remember captured piece 
+    // make the move 
+    // return true
     public bool MakeLegitMove(Move move)
     {
-        // return false if:
-        //          a. the game is over
-        //          b. (from or to) coordinates are outside of board
-        //          c. from is emptyTile
-        //          d. if to is not in the set of legitimate moves
-        // if it is capture, remember captured piece 
-        // make the move 
-        // return true
-        WriteLine("Before ismove legit");
-       
+        WriteLine("Before ismove legit");  
         if (!IsMoveLegit(move))
             return false;
-
         WriteLine("After ismove legit");
         
 
@@ -83,7 +81,7 @@ class Chess
 
     void MaintainEnPassantMemory(Move move)
     {
-        if(board[move.to.row, move.to.col] is Pawn p && (Math.Abs(move.to.row - move.from.row) == 2))
+        if(board[move.to.row, move.to.col] is Pawn && (Math.Abs(move.to.row - move.from.row) == 2))
         {
             // el passant has been made possible, some pawn jump two tiles, remember it column and enable en passant 
             enPassantPossible = true;
@@ -138,9 +136,8 @@ class Chess
         }
     }
 
-    void RookCastling(Move move)
+    void RookCastling(Move move) // if the move is castling, also make the second move of the rook
     {
-        // if the move is castling, also make the second move of the rook
         int toRow = move.to.row;
         int toCol = move.to.col;
         int fromRow = move.from.row;
@@ -193,38 +190,32 @@ class Chess
         board[move.from.row, move.from.col] = null;
     }
 
+    // 1. foreach possible Move of current player
+    // 2.     init new instance of chess and make this move 
+    // 3.     if the board configuration is not check current player (from now)
+    // 4.         return false
+    // 5. return true
     bool IsCheckMate()
     {
-        // pseudocode:
-        // 1. foreach possible Move of current player
-        // 2.     init new instance of chess and make this move 
-        // 3.     if the board configuration is not check current player (from now)
-        // 4.         return false
-        // 5. return true
-        //
-        // --> if there is no move current player can make to escape check, than it is checkmate
-        // Chess deepcopy = GetDeepCopy();
-
         foreach (Move move in GetAllPlayersMoves() )
         {
             Move( move );
-            if ( !IsPlayerInCheck() )
-            {
+            if ( !IsPlayerInCheck() ) {
                 Unmove(move);
                 return false;
             }
             Unmove(move);
         }
-
         return true;
     }
 
+    // List of moves
+    // for all pieces of inturn player 
+    //      add all moves of the piece
+    // return list of moves
+
     List<Move> GetAllPlayersMoves()
     {
-        // List of moves
-        // for all pieces of inturn player 
-        //      add all moves of the piece
-        // return list of moves
         List<Move> result = new();
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -236,33 +227,20 @@ class Chess
 
     public void Unmove( Move move )
     {
-        
         if(lastMoveWasCapture && lastCapture is Piece p)
         {
             Move(new Move(move.to, move.from));
             board[p.position.row, p.position.col] = p;
-        } else
-        {
+        } else {
             Move(new Move(move.to, move.from));
         }
-            
     }
 
-    bool OutsideOfBoard(Move move)
-    {
-        if (OutsideOfBoard( move.from ))
-            return true;
-        if (OutsideOfBoard( move.to ))
-            return true;
-        return false;
-    }
-
+    bool OutsideOfBoard(Move move) => OutsideOfBoard(move.from) || OutsideOfBoard(move.to);
     bool OutsideOfBoard( ( int row, int col ) position ) => position.row < 0 || position.row > 7 || position.col < 0 || position.col > 7;
 
     bool IsLegit(Move move)
     {
-        // called already after checking that move from is not empty and coordinates are inside board and winner is null
-        // check if move.to is contains in getLegitMoves(move.from) result
         List<Move> validMoves = GetLegitMoves(move.from);
         WriteLine("Is legit function is assesing move: from: " + move.from.row + " " + move.from.col + " to: " + move.to.row + " " + move.to.col);
         foreach (Move m in validMoves)
@@ -289,12 +267,6 @@ class Chess
 
     bool IsPlayerInCheck()
     {
-        // pseudocode: 
-        // for all notInTurn's pieces 
-        //      for all moves of piece
-        //          if the move 'steps' onto inTurn king 
-        //              return true
-        // return false
         List<Piece> notInTurnPieces = new ();
         for (int i = 0; i < 8; i++)
             for (int j = 0; j < 8; j++)
@@ -322,13 +294,14 @@ class Chess
         throw new Exception("FATAL ERROR, one of the kings is not on board");
     }
 
+    // return empty list if: 
+    //          a. game is over (winner is not null)
+    //          b. position's coordinate is outside of board
+    //          c. board[position] is emptyTile
+    // else get the list of legitimate moves
+
     public List<Move> GetLegitMoves( (int row, int col) from)
     {
-        // return empty list if: 
-        //          a. game is over (winner is not null)
-        //          b. position's coordinate is outside of board
-        //          c. board[position] is emptyTile
-        // else get the list of legitimate moves
         int r = from.row;
         int c = from.col;
         List<Move> result = new ();
@@ -351,16 +324,13 @@ class Chess
 
         if (board[ r, c] is Piece p)
             result = p.PossibleMoves( board );
-
         
         foreach (Move m in PossibleEnPassantMoves())
             result.Add(m);
-        // Now we must:
-        //              a. filter out moves that would put players king into check
-        //              b. in case the moving piece is king, consider adding options to do castling
+        
+        // disallow moves puting own king into check:
         List<Move> filteredResult = FilterCheck( result );
-        // allow castling foreach only if king has been clicked and is at column 4
-        // and assert king is not in check 
+        // allow castling:
         if( board[r, c] is King k && c == 4 && !check )
             foreach ( Move castling in PossibleCastlings( (r,c), k ) ) 
                 filteredResult.Add(castling);
@@ -368,18 +338,29 @@ class Chess
         return filteredResult;
     }
 
+    // else check if there are pawns in neighbourhood of the pawn that jumped two  tiles
+    // that would have the opportunity to do this capture 
+    // ! beware this capture is tricky. It is the only capture that doesnt capture piece on the tile that it steps on
+    // Which in turn destroys the code logic. 
+    // In addition to doing this move, assert, capture is being correctly saved 
+
     List<Move> PossibleEnPassantMoves()
     {
         List<Move> enPassant = new();
         if (!enPassantPossible)
             return enPassant; // empty list 
 
-        // else check if there are pawns in neighbourhood of the pawn that jumped two  tiles
-        // that would have the opportunity to do this capture 
-        // ! beware this capture is tricky. It is the only capture that doesnt capture piece on the tile that it steps on
-        // Which in turn destroys the code logic. 
-        // In addition to doing this move, assert, capture is being correctly saved 
+        int row = turn == Player.White ? 3 : 4;
+        int farward = turn == Player.White ? -1 : 1; // pawns go either 'up' or 'down'
+        int left = enPassantCol - 1;
+        int right = enPassantCol + 1;
+        if (left != -1 && board[row, left] is Pawn p && p.owner == turn)
+            enPassant.Add(new Move( (row, left), (  row+farward, enPassantCol) ));
 
+        if (right != 8 && board[row, right] is Pawn r && r.owner == turn)
+            enPassant.Add(new Move( (row, right), ( row+farward, enPassantCol) ));
+
+        return enPassant;
     }
 
     List<Move> PossibleCastlings( (int r, int c) from , King k )
