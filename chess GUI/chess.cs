@@ -54,18 +54,13 @@ class Chess
         // if it is capture, remember captured piece 
         // make the move 
         // return true
+        WriteLine("Before ismove legit");
+       
         if (!IsMoveLegit(move))
             return false;
 
-        if (IsCapture(move))
-        {
-            lastCapture = board[move.to.row, move.to.col];
-            lastMoveWasCapture = true;
-        }
-        else
-        {
-            lastMoveWasCapture = false;
-        }
+        WriteLine("After ismove legit");
+        
 
         Move(move);
         MaintainCastlingMemory(move);
@@ -157,10 +152,21 @@ class Chess
         }
     }
 
-    bool IsCapture(Move move) => board[move.to.row, move.to.col] == null; 
+    bool IsCapture(Move move) => board[move.to.row, move.to.col] != null; 
 
     void Move(Move move)
     {
+        if (IsCapture(move))
+        {
+            lastCapture = board[move.to.row, move.to.col];
+            lastMoveWasCapture = true;
+        }
+        else
+        {
+            lastMoveWasCapture = false;
+            lastCapture = null;
+        }
+
         board[move.to.row, move.to.col] = board[move.from.row, move.from.col];
         if (board[move.to.row, move.to.col] is Piece p)
         {
@@ -180,15 +186,17 @@ class Chess
         // 5. return true
         //
         // --> if there is no move current player can make to escape check, than it is checkmate
-        Chess deepcopy = GetDeepCopy();
+        // Chess deepcopy = GetDeepCopy();
 
         foreach (Move move in GetAllPlayersMoves() )
         {
-            deepcopy.Move( move );
-            if ( !deepcopy.IsPlayerInCheck() )
+            Move( move );
+            if ( !IsPlayerInCheck() )
+            {
+                Unmove(move);
                 return false;
-
-            deepcopy.Unmove( move );
+            }
+            Unmove(move);
         }
 
         return true;
@@ -209,7 +217,7 @@ class Chess
         return result;
     }
 
-    Chess GetDeepCopy() {
+    /* Chess GetDeepCopy() {
         Chess deepcopy = (Chess) this.MemberwiseClone();
         // now it is shallow copy, we must create new instances of reference types:
         deepcopy.board = new Tile[8, 8];
@@ -227,13 +235,20 @@ class Chess
         
         deepcopy.castlingMemory = castlingMemory.ShallowCopy();
         return deepcopy;
-    }
+    }*/
 
     public void Unmove( Move move )
     {
-        Move(new Move(move.to, move.from) );
-        if(lastMoveWasCapture && lastCapture is Piece p) 
+        
+        if(lastMoveWasCapture && lastCapture is Piece p)
+        {
+            Move(new Move(move.to, move.from));
             board[p.position.row, p.position.col] = p;
+        } else
+        {
+            Move(new Move(move.to, move.from));
+        }
+            
     }
 
     bool OutsideOfBoard(Move move)
@@ -391,29 +406,27 @@ class Chess
         // move all moves
         // check if king is in check (! king of current player)
         // if king is not in check add this move to result
-        Chess deepcopy = GetDeepCopy();
         List<Move> filtered = new();
         foreach(Move move in possibleMoves)
         {
-            deepcopy.Move( move );
+            WriteLine("Filtercheck debug point");
+            Move( move );
             // is king in check checks the king whose turn it is! I must check the player that just move!!
             bool checkIsPossible = false;
-            (int row, int col) = deepcopy.GetKingsCoordinates( turn ); // this needs to be here we also may be moving the king
+            (int row, int col) = GetKingsCoordinates( turn ); // this needs to be here we also may be moving the king
 
             for (int i = 0; i < 8; i++)
                 for (int j = 0; j < 8; j++)
-                    if (deepcopy.board[i, j] is Piece p && turn != p.owner)
-                        foreach (Move enemyMove in p.PossibleMoves(deepcopy.board))
+                    if (board[i, j] is Piece p && turn != p.owner)
+                        foreach (Move enemyMove in p.PossibleMoves(board))
                             if (enemyMove.to.row == row && enemyMove.to.col == col)
                                 checkIsPossible = true;
 
             if ( !checkIsPossible )
-                filtered.Add(move);
+                filtered.Add( move );
 
-            deepcopy.Unmove( move );
+            Unmove( move );
         }
         return filtered;
     }
-
-
 }
