@@ -11,6 +11,8 @@ class Chess
     public bool check = false;
     Tile lastCapture = null;
     bool lastMoveWasCapture = false; // !! works only for one move backwards
+    bool enPassantPossible = false;
+    int enPassantCol = -1;
     CastlingMemory castlingMemory = new();
 
     public Chess() {
@@ -63,6 +65,7 @@ class Chess
         
 
         Move(move);
+        MaintainEnPassantMemory(move);
         MaintainCastlingMemory(move);
         RookCastling(move);
         PawnToQueen(move);
@@ -76,6 +79,20 @@ class Chess
             winner = prevturn;
 
         return true;
+    }
+
+    void MaintainEnPassantMemory(Move move)
+    {
+        if(board[move.to.row, move.to.col] is Pawn p && (Math.Abs(move.to.row - move.from.row) == 2))
+        {
+            // el passant has been made possible, some pawn jump two tiles, remember it column and enable en passant 
+            enPassantPossible = true;
+            enPassantCol = move.to.col;
+        } else
+        {
+            enPassantPossible = false;
+            enPassantCol = -1;
+        }
     }
 
     bool IsMoveLegit(Move move) {
@@ -217,26 +234,6 @@ class Chess
         return result;
     }
 
-    /* Chess GetDeepCopy() {
-        Chess deepcopy = (Chess) this.MemberwiseClone();
-        // now it is shallow copy, we must create new instances of reference types:
-        deepcopy.board = new Tile[8, 8];
-
-        for (int i = 0; i < 8; i++)
-            for (int j = 0; j < 8; j++)
-                if (board[i, j] is Piece p)
-                    deepcopy.board[i, j] = p.GetCopy();
-
-        if(lastCapture is Piece pp) {
-            deepcopy.lastCapture = pp.GetCopy();
-        } else {
-            deepcopy.lastCapture = null;
-        }
-        
-        deepcopy.castlingMemory = castlingMemory.ShallowCopy();
-        return deepcopy;
-    }*/
-
     public void Unmove( Move move )
     {
         
@@ -339,29 +336,50 @@ class Chess
             return result;
 
         WriteLine("GetLegitMoves 1");
+        WriteLine($"Lastmove capture: {lastMoveWasCapture}");
+        WriteLine($"Lastmove capture piece: {lastCapture}");
+        
+        if (lastMoveWasCapture && lastCapture is Piece ppp)
+        {
+            WriteLine($"The owner was: {ppp.owner}, with coords: r:{ppp.position.row}, c:{ppp.position.col}");
+        }
 
-        // in case user requested move of player the doesnt have the turn to move:
+        WriteLine($">>> enPassantMemory: {enPassantPossible} {enPassantCol} <<<");
+        // in case user requested move of player that doesnt have the turn to move:
         if (board[ r, c] is Piece pp && turn != pp.owner)
             return result;
-
-        WriteLine("GetLegitMoves 2");
 
         if (board[ r, c] is Piece p)
             result = p.PossibleMoves( board );
 
+        
+        foreach (Move m in PossibleEnPassantMoves())
+            result.Add(m);
         // Now we must:
         //              a. filter out moves that would put players king into check
         //              b. in case the moving piece is king, consider adding options to do castling
         List<Move> filteredResult = FilterCheck( result );
-
         // allow castling foreach only if king has been clicked and is at column 4
         // and assert king is not in check 
         if( board[r, c] is King k && c == 4 && !check )
             foreach ( Move castling in PossibleCastlings( (r,c), k ) ) 
                 filteredResult.Add(castling);
         
-        WriteLine("Filtered results count: " + filteredResult.Count);
         return filteredResult;
+    }
+
+    List<Move> PossibleEnPassantMoves()
+    {
+        List<Move> enPassant = new();
+        if (!enPassantPossible)
+            return enPassant; // empty list 
+
+        // else check if there are pawns in neighbourhood of the pawn that jumped two tiles
+        // that would have the opportunity to do this capture 
+        // ! beware this capture is tricky. It is the only capture that doesnt capture piece on the tile that it steps on
+        // Which in turn destroys the code logic. 
+        // In addition to doing this move, assert, capture is being correctly saved 
+
     }
 
     List<Move> PossibleCastlings( (int r, int c) from , King k )
