@@ -355,7 +355,8 @@ class Chess
         List<Move> filteredResult = FilterCheck( result );
 
         // allow castling foreach only if king has been clicked and is at column 4
-        if( board[r, c] is King k && c == 4 )
+        // and assert king is not in check 
+        if( board[r, c] is King k && c == 4 && !check )
             foreach ( Move castling in PossibleCastlings( (r,c), k ) ) 
                 filteredResult.Add(castling);
         
