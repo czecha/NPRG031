@@ -11,7 +11,7 @@ class Chess
     public bool check = false;
     public bool stalemate = false;
     Tile lastCapture = null;
-    bool lastMoveWasCapture = false; // !! works only for one move backwards
+    bool lastMoveWasCapture = false;
     bool enPassantPossible = false;
     int enPassantCol = -1;
     CastlingMemory castlingMemory = new();
@@ -49,41 +49,44 @@ class Chess
 
     public bool MakeLegitMove(Move move)
     {
-        WriteLine("Before ismove legit");  
         if (!IsMoveLegit(move))
             return false;
-        WriteLine("After ismove legit");
-
         Move(move);
 
-        // exception game logic maintanance:
-        // enPassant, Castling, Pawn->Queen
-        MaintainEnPassantMemory(move);
-        MaintainCastlingMemory(move);
-        enPassantCapture(move);
-        RookCastling(move);
-        PawnToQueen(move);
+        // enPassant, Castling, Pawn->Queen:
+        HandleExceptionMoves(move);
 
         // turn and endgame maintance:
-        Player prevturn = turn;
         turn = (turn == Player.White) ? Player.Black : Player.White;
+        HandleEndGameStates();
 
+        return true;
+    }
+
+    void HandleExceptionMoves(Move move)
+    {
+        MaintainEnPassantMemory(move);
+        MaintainCastlingMemory(move);
+        EnPassantCapture(move);
+        RookCastling(move);
+        PawnToQueen(move);
+    }
+
+    void HandleEndGameStates()
+    {
         check = IsPlayerInCheck();
         if (check && IsCheckMate())
-            winner = prevturn;
-
-        stalemate = staleMate();
-
+            winner = turn;
+        stalemate = StaleMate();
         WriteLine("Check status: " + check);
         WriteLine("Stalemate status: " + stalemate);
-        return true;
     }
 
     // get all possible moves of all turn's pieces
     // if all pieces have zero legit moves
     // set stalemate to true 
     // otherwise, with first piece having at least one move return false
-    bool staleMate()
+    bool StaleMate()
     {
         if (check) // stalemate can only happen when king is not in check 
             return false;
@@ -98,7 +101,7 @@ class Chess
     }
 
     // if the move was enpassant capture, remove the apropriate pawn from board, and save info about last capture
-    void enPassantCapture(Move move)
+    void EnPassantCapture(Move move)
     {
         int r = move.to.row;
         int c = move.to.col;
@@ -272,13 +275,10 @@ class Chess
     {
         WriteLine("Is legit function is assesing move: from: " + move.from.row + " " + move.from.col + " to: " + move.to.row + " " + move.to.col);
         List<Move> validMoves = GetLegitMoves(move.from);
-
         foreach (Move m in validMoves)
             if (MovesAreEqual(m, move))
-            {
-                WriteLine("Is legit is true");
                 return true;
-            }
+
         WriteLine("Is legit is false");
         return false;
     }
@@ -316,7 +316,6 @@ class Chess
             for (int j = 0; j < 8; j++)
                 if (board[i, j] is King king && player == king.owner)
                     return (i, j);
-        WriteLine("Ouch");
         throw new Exception("FATAL ERROR, one of the kings is not on board");
     }
 
@@ -325,7 +324,6 @@ class Chess
     //          b. position's coordinate is outside of board
     //          c. board[position] is emptyTile
     // else get the list of legitimate moves
-
     public List<Move> GetLegitMoves( (int row, int col) from)
     {
         int r = from.row;
@@ -334,16 +332,6 @@ class Chess
         if (winner != Player.No_One || OutsideOfBoard(from) || board[r, c] == null)
             return result;
 
-        WriteLine("GetLegitMoves 1");
-        WriteLine($"Lastmove capture: {lastMoveWasCapture}");
-        WriteLine($"Lastmove capture piece: {lastCapture}");
-        
-        if (lastMoveWasCapture && lastCapture is Piece ppp)
-        {
-            WriteLine($"The owner was: {ppp.owner}, with coords: r:{ppp.position.row}, c:{ppp.position.col}");
-        }
-
-        WriteLine($">>> enPassantMemory: {enPassantPossible} {enPassantCol} <<<");
         // in case user requested move of player that doesnt have the turn to move:
         if (board[ r, c] is Piece pp && turn != pp.owner)
             return result;
@@ -353,7 +341,6 @@ class Chess
         
         foreach (Move m in PossibleEnPassantMoves())
             result.Add(m);
-        
         // disallow moves puting own king into check:
         List<Move> filteredResult = FilterCheck( result );
         // allow castling:
@@ -368,8 +355,7 @@ class Chess
     // that would have the opportunity to do this capture 
     // ! beware this capture is tricky. It is the only capture that doesnt capture piece on the tile that it steps on
     // Which in turn destroys the code logic. 
-    // In addition to doing this move, assert, capture is being correctly saved 
-
+    // In addition to doing this move, assert, capture is being correctly saved
     List<Move> PossibleEnPassantMoves()
     {
         List<Move> enPassant = new();

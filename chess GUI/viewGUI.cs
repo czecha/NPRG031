@@ -9,7 +9,6 @@ using static System.Console;
 
 class ViewGTK : Window {
     readonly Chess chess;
-    //int pressCounter = 0;
     int fromX = -1;
     int fromY = -1;
     bool highlight = true;
@@ -164,31 +163,3 @@ class ViewGTK : Window {
         c.Fill();
     }
 }
-
-/*
-missing features:
-5. ANIMACE prechodu figurky
-
-Done    1. class chess evaluates after move whether it is check, view informs about this
-Done    2. class chess evaluates after move whether is is check-mate and view falls to end game state 
-Done    3. class King is capable of giving Castleing moves correctly 
-Done    4. all piece classes correctly disallow move, if it would put their own King into check position  
-Done    6. pawn se po prichodu na posledni row transformuje na kralovnu */
-
-/*
- Castling architecture:
- six booleans in separate class to not populate chess namespace 
-    white_A_RookMoved >> A stands for column 
-    white_H_RookMoved >> H stands for column 
-    whiteKingMoved
-    black_A_RookMoved
-    black_H_RookMoved
-    blackKingMoved
- 
-       booleans will initiate to false 
-       
-    1. find good place that will turn them to true once the coresponding pieces move 
-    2. write method add castleing moves that will add moves to possible moves in all needed places 
-    3. add function inside makemove that will check whether king moves as in casteling (two tiles distance)
-    4.      if it does, it will also move the coresponding rook 
- */
