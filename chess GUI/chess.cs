@@ -9,6 +9,7 @@ class Chess
     public Player turn = Player.White;
     public Player winner = Player.No_One;
     public bool check = false;
+    public bool stalemate = false;
     Tile lastCapture = null;
     bool lastMoveWasCapture = false; // !! works only for one move backwards
     bool enPassantPossible = false;
@@ -16,7 +17,7 @@ class Chess
     CastlingMemory castlingMemory = new();
 
     public Chess() {
-        ResetChessBoard(); 
+        ResetChessBoard();
     }
 
     public void ResetChessBoard()
@@ -46,38 +47,54 @@ class Chess
         board[7, 4] = new King((7, 4), Player.White);
     }
 
-    // return false if:
-    //          a. the game is over
-    //          b. (from or to) coordinates are outside of board
-    //          c. from is emptyTile
-    //          d. if to is not in the set of legitimate moves
-    // if it is capture, remember captured piece 
-    // make the move 
-    // return true
     public bool MakeLegitMove(Move move)
     {
         WriteLine("Before ismove legit");  
         if (!IsMoveLegit(move))
             return false;
         WriteLine("After ismove legit");
-        
 
         Move(move);
+
+        // exception game logic maintanance:
+        // enPassant, Castling, Pawn->Queen
         MaintainEnPassantMemory(move);
         MaintainCastlingMemory(move);
         enPassantCapture(move);
         RookCastling(move);
         PawnToQueen(move);
 
+        // turn and endgame maintance:
         Player prevturn = turn;
         turn = (turn == Player.White) ? Player.Black : Player.White;
 
         check = IsPlayerInCheck();
-        WriteLine("Check status: " + check);
         if (check && IsCheckMate())
             winner = prevturn;
 
+        stalemate = staleMate();
+
+        WriteLine("Check status: " + check);
+        WriteLine("Stalemate status: " + stalemate);
         return true;
+    }
+
+    // get all possible moves of all turn's pieces
+    // if all pieces have zero legit moves
+    // set stalemate to true 
+    // otherwise, with first piece having at least one move return false
+    bool staleMate()
+    {
+        if (check) // stalemate can only happen when king is not in check 
+            return false;
+
+        List<Move> legitimateMoves = GetAllPlayersMoves();
+        foreach (Move m in PossibleEnPassantMoves())
+            legitimateMoves.Add(m);
+        // disallow moves puting own king into check:
+        legitimateMoves = FilterCheck( legitimateMoves );
+
+        return legitimateMoves.Count == 0;
     }
 
     // if the move was enpassant capture, remove the apropriate pawn from board, and save info about last capture
@@ -109,13 +126,9 @@ class Chess
         }
     }
 
-    bool IsMoveLegit(Move move) {
-        if (winner != Player.No_One || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null)
+    bool IsMoveLegit(Move move) { // I want to keep it this way, since puting braces around all 4 and than negates, make it be not understandable
+        if (winner != Player.No_One || OutsideOfBoard(move) || board[move.from.row, move.from.col] == null || !IsLegit(move))
             return false;
-        WriteLine("Passed first checks");
-        if (!IsLegit(move))
-            return false;
-        WriteLine("Passed second check");
         return true;
     }
 
@@ -257,18 +270,15 @@ class Chess
 
     bool IsLegit(Move move)
     {
-        List<Move> validMoves = GetLegitMoves(move.from);
         WriteLine("Is legit function is assesing move: from: " + move.from.row + " " + move.from.col + " to: " + move.to.row + " " + move.to.col);
+        List<Move> validMoves = GetLegitMoves(move.from);
+
         foreach (Move m in validMoves)
-        {
-            WriteLine("Comparing with possible move: from: " + m.from.row + " " + m.from.col + " to: " + m.to.row + " " + m.to.col);
             if (MovesAreEqual(m, move))
             {
                 WriteLine("Is legit is true");
                 return true;
             }
-        }
-
         WriteLine("Is legit is false");
         return false;
     }
@@ -410,7 +420,7 @@ class Chess
         return castlings;
     }
 
-    bool TilesNotUnderCheck((int r, int c) firstTile, (int r, int c) secondTile)
+    bool TilesNotUnderCheck( (int r, int c) firstTile, (int r, int c) secondTile)
     {
         bool tilesNotUnderCheck = true;
         for (int i = 0; i < 8; i++)
@@ -430,9 +440,8 @@ class Chess
         // check if king is in check (! king of current player)
         // if king is not in check add this move to result
         List<Move> filtered = new();
-        foreach(Move move in possibleMoves)
+        foreach(Move move in possibleMoves) //WriteLine("Filtercheck debug point");
         {
-            WriteLine("Filtercheck debug point");
             Move( move );
             // is king in check checks the king whose turn it is! I must check the player that just move!!
             bool checkIsPossible = false;

@@ -122,15 +122,17 @@ class ViewGTK : Window {
 
     void InformWinner()
     {
-        if (chess.winner != Player.No_One)
+        if ( chess.winner != Player.No_One )
             Title = "Game over! The winner is " + chess.winner + ".";
+        if (chess.stalemate)
+            Title = "Draw by stalemate! Current player: " + chess.turn + " has no legitimate move!";
     }
 
     bool CheckWin() {
 
-        if( chess.winner == Player.No_One )
+        if( chess.winner == Player.No_One && !chess.stalemate)
             return false;
-        
+
         clickedOnWinner++;
 
         if(clickedOnWinner == 1) {
